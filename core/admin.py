@@ -1,10 +1,18 @@
 from django.contrib import admin
-from core.models import ProductCategory, Product, Cart, Order
+from core.models import ProductCategory, Product, Cart, Order, Picture
 
 
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
     list_display = ('name',)
+
+
+@admin.register(Picture)
+class PictureAdmin(admin.ModelAdmin):
+    list_display = ('product_name', 'product_link')
+
+    def product_name(self, obj):
+        return obj.image.name.split('/')[-1]
 
 
 @admin.register(Product)

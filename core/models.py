@@ -10,8 +10,16 @@ class ProductCategory(models.Model):
 
 
 class Picture(models.Model):
-    product_link = models.ForeignKey('Product', on_delete=models.PROTECT)
-    image = models.ImageField()
+    product_link = models.ForeignKey(
+        'Product',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True
+    )
+    image = models.ImageField(upload_to='images/')
+
+    def __str__(self):
+        return self.image.name.split('/')[-1]
 
 
 class Product(models.Model):
@@ -20,7 +28,8 @@ class Product(models.Model):
     pictures = models.ManyToManyField(Picture, null=True)
     name = models.CharField(max_length=50)
     description = models.TextField(max_length=250)
-    sizes_and_colors = models.CharField(max_length=100)
+    sizes_available = models.CharField(max_length=100)
+    price = models.FloatField()
 
     def __str__(self):
         return str(self.name)

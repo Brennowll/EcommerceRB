@@ -1,6 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+@layer base {
+  @font-face {
+    font-family: Bauhaus-Regular;
+    src: url(./fonts/BauhausRegular.ttf);
+  }
+
+  .filter-white {
+    filter: invert(98%) sepia(93%) saturate(0%) hue-rotate(82deg) brightness(104%) contrast(101%);
+  }
+  .filter-gray-500 {
+    filter: invert(46%) sepia(7%) saturate(774%) hue-rotate(182deg) brightness(94%) contrast(86%);
+  }
 }
