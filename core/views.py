@@ -3,13 +3,15 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
-import math
-from core.serializers import (TokenPairSerializer, CategorySerializer, UserSerializer, PictureSerializer,
-                              ProductSerializer, CartSerializer, ProductForOrderSerializer, OrderSerializer)
-from core.models import ProductCategory, Cart, ProductForOrder, Order, Product, Picture
+from core.serializers import (UserDetailsSerializer, TokenPairSerializer, CategorySerializer,
+                              UserSerializer, PictureSerializer, ProductSerializer,
+                              CartSerializer, ProductForOrderSerializer, OrderSerializer)
+from core.models import (UserDetails, ProductCategory, Cart,
+                         ProductForOrder, Order, Product, Picture)
 # import bleach
 
 
@@ -22,7 +24,22 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return User.objects.filter(username=self.request.user.username)
+        return User.objects.filter(id=self.request.user.id)
+
+    def list(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset().first())
+        return Response(serializer.data)
+
+
+class UserDetailsViewSet(viewsets.ModelViewSet):
+    serializer_class = UserDetailsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return UserDetails.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        return serializer.save(user=self.request.user)
 
 
 @api_view(['POST'])
@@ -34,10 +51,10 @@ def create_user(request):
         username = serializer.validated_data.get('username')
         email = serializer.validated_data.get('email')
 
-        if User.objects.filter(email=email).exists():
+        if email and User.objects.filter(email=email).exists():
             return Response({"error": "Email already exists"}, status=HTTP_400_BAD_REQUEST)
 
-        if User.objects.filter(username=username).exists():
+        if username and User.objects.filter(username=username).exists():
             return Response({"error": "Username already exists"}, status=HTTP_400_BAD_REQUEST)
 
         user = serializer.save()

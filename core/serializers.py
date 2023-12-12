@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from core.models import ProductCategory, Picture, Product, Cart, ProductForOrder, Order
+from core.models import (UserDetails, ProductCategory, Picture,
+                         Product, Cart, ProductForOrder, Order)
 
 
 class TokenPairSerializer(TokenObtainPairSerializer):
@@ -14,18 +15,39 @@ class TokenPairSerializer(TokenObtainPairSerializer):
         return data
 
 
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password"]
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            username=validated_data['username'],
+            email=validated_data['email']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+    def to_representation(self, instance):
+        # Exclui o campo de senha na serialização
+        data = super().to_representation(instance)
+        data.pop('password', None)
+        return data
+
+
+class UserDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDetails
+        fields = '__all__'
+
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCategory
         fields = '__all__'
-
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name="core:user-detail")
-
-    class Meta:
-        model = User
-        fields = ["username", "email"]
 
 
 class PictureSerializer(serializers.ModelSerializer):

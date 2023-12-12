@@ -1,5 +1,37 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from phonenumber_field.modelfields import PhoneNumberField
+
+
+class UserDetails(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, blank=False, null=False)
+    adress = models.CharField(max_length=50)
+    cellphone = PhoneNumberField(unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        # pylint: disable=no-member
+        return self.user.username
+        # pylint: enable=no-membe
+
+    def clean(self):
+        if self.cellphone:
+            cellphone_str = str(self.cellphone)
+            if not cellphone_str.isdigit() or len(cellphone_str) < 11:
+                raise ValidationError(
+                    "O número de telefone deve ter pelo menos 11 dígitos.")
+
+    def save(self, *args, **kwargs):
+        if self.cellphone:
+            cellphone_number = str(self.cellphone.national_number)
+            if not cellphone_number.startswith('55'):
+                self.cellphone = f'+55{cellphone_number}'
+
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = 'Users Details'
 
 
 class ProductCategory(models.Model):
@@ -7,6 +39,9 @@ class ProductCategory(models.Model):
 
     def __str__(self):
         return str(self.name)
+
+    class Meta:
+        verbose_name_plural = 'Product categories'
 
 
 class Picture(models.Model):

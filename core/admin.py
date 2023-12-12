@@ -1,5 +1,11 @@
 from django.contrib import admin
-from core.models import ProductCategory, Product, Cart, Order, Picture
+from core.models import (UserDetails, ProductCategory, Product,
+                         Cart, Order, Picture)
+
+
+@admin.register(UserDetails)
+class UserDetailsAdmin(admin.ModelAdmin):
+    list_display = ('user',)
 
 
 @admin.register(ProductCategory)

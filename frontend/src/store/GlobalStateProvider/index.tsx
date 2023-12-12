@@ -6,9 +6,18 @@ import React, {
   useState,
 } from "react"
 
+type userData = {
+  username: string
+  email: string
+}
+
 interface GlobalStateContextType {
   navMenuIsOpen: boolean
   setNavMenuIsOpen: Dispatch<SetStateAction<boolean>>
+  userIsLogged: boolean | null
+  setUserIsLogged: Dispatch<SetStateAction<boolean | null>>
+  userData: userData | null
+  setUserData: Dispatch<SetStateAction<userData | null>>
 }
 
 export const GlobalStateContext =
@@ -22,12 +31,20 @@ const GlobalStateProvider: React.FC<GlobalStateProviderProps> = ({
   children,
 }: GlobalStateProviderProps) => {
   const [navMenuIsOpen, setNavMenuIsOpen] = useState<boolean>(false)
+  const [userIsLogged, setUserIsLogged] = useState<boolean | null>(
+    null,
+  )
+  const [userData, setUserData] = useState<userData | null>(null)
 
   return (
     <GlobalStateContext.Provider
       value={{
         navMenuIsOpen,
         setNavMenuIsOpen,
+        userIsLogged,
+        setUserIsLogged,
+        userData,
+        setUserData,
       }}
     >
       {children}

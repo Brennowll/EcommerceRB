@@ -99,7 +99,7 @@ const Header = () => {
             className="hidden items-center justify-center md:flex
           md:flex-col [&>a]:font-bauhausRegular"
           >
-            <a href="/cadastro" className="hover:underline">
+            <a href="/login" className="hover:underline">
               Cadastre-se
             </a>
             <a href="/login" className="hover:underline">
