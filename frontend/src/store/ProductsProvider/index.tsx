@@ -13,15 +13,25 @@ import Product from "../../components/Product"
 
 type Product = {
   id: number
+  category: string
   picturesLinks: string[]
-  sizesAndColors: string
   name: string
   description: string
-  category: string
+  sizesAvailable: string
   price: number
 }
 
-interface ProductsContextType {
+type Category = {
+  name: string
+}
+
+interface Results {
+  categories: Category[]
+  num_pages: number
+  products: Product[]
+}
+
+type ProductsContextType = {
   categoryForApi: string | null
   setCategoryForApi: Dispatch<SetStateAction<string | null>>
   numPages: number
@@ -41,7 +51,7 @@ export const ProductsContext = createContext<ProductsContextType>(
   {} as ProductsContextType,
 )
 
-interface ProductsProviderProps {
+type ProductsProviderProps = {
   children: ReactNode
 }
 
@@ -57,49 +67,68 @@ const ProductsProvider: React.FC<ProductsProviderProps> = ({
 
   const location = useLocation()
   const pathParts = location.pathname.split("/")
-
   const lastPart = pathParts.slice(-1)[0]
   const page = !isNaN(parseInt(lastPart)) ? null : parseInt(lastPart)
 
   const { refetch } = useQuery<Product[]>({
     queryKey: ["products"],
     queryFn: async () => {
-      const params: ApiParams = {}
-
-      if (categoryForApi) {
-        params.category = categoryForApi
-      } else {
-        const categoryInPath = pathParts[1]
-        if (categoryInPath != "pecas") {
-          params.category =
-            categoryInPath.charAt(0).toUpperCase() +
-            categoryInPath.slice(1)
-        }
-      }
-
-      if (page) {
-        params.page = page
-      }
+      const params: ApiParams = buildApiParams(pathParts, page)
 
       const response = await api.get("products/", {
         params: params,
       })
 
-      const tempCategories: string[] = []
-      for (const category of response.data.results.categories) {
-        if (!tempCategories.includes(category.name)) {
-          tempCategories.push(category.name)
-        }
-      }
-
-      setCategories(tempCategories)
-      setNumPages(response.data.results.num_pages)
-      setProducts(response.data.results.products)
+      const uniqueCategories = findUniqueCategories(
+        response.data.results.categories,
+      )
+      updateStateWithResponseData(
+        response.data.results,
+        uniqueCategories,
+      )
 
       return response.data
     },
     refetchOnWindowFocus: false,
   })
+
+  function buildApiParams(pathParts: string[], page: number | null) {
+    const params: ApiParams = {}
+
+    if (categoryForApi) {
+      params.category = categoryForApi
+    } else {
+      const categoryInPath = pathParts[1]
+      if (categoryInPath !== "pecas") {
+        params.category =
+          categoryInPath.charAt(0).toUpperCase() +
+          categoryInPath.slice(1)
+      }
+    }
+
+    if (page) {
+      params.page = page
+    }
+
+    return params
+  }
+
+  function findUniqueCategories(categories: Category[]): string[] {
+    const tempCategories: string[] = []
+    for (const category of categories) {
+      tempCategories.push(category.name)
+    }
+    return tempCategories
+  }
+
+  function updateStateWithResponseData(
+    results: Results,
+    uniqueCategories: string[],
+  ): void {
+    setCategories(uniqueCategories)
+    setNumPages(results.num_pages)
+    setProducts(results.products)
+  }
 
   useEffect(() => {
     refetch()

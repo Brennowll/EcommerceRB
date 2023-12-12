@@ -11,7 +11,7 @@ type userData = {
   email: string
 }
 
-interface GlobalStateContextType {
+type GlobalStateContextType = {
   navMenuIsOpen: boolean
   setNavMenuIsOpen: Dispatch<SetStateAction<boolean>>
   userIsLogged: boolean | null
@@ -23,7 +23,7 @@ interface GlobalStateContextType {
 export const GlobalStateContext =
   createContext<GlobalStateContextType>({} as GlobalStateContextType)
 
-interface GlobalStateProviderProps {
+type GlobalStateProviderProps = {
   children: ReactNode
 }
 

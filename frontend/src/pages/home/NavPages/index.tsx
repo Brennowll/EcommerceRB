@@ -18,36 +18,50 @@ const NavPages = () => {
   const lastPart = pathParts.slice(-1)[0]
   const categoryPath = `/${pathParts[1]}/`
 
-  const page = !isNaN(parseInt(lastPart)) ? parseInt(lastPart) : 1
-  const isFirstPage = page == 1
-  const isLastPage = page == numPages
-  const classLinkUnavailable = " filter-gray-500"
+  const page = parseInt(lastPart) || 1
+  const isFirstPage = page === 1
+  const isLastPage = page === numPages
 
+  const classLinkUnavailable = "filter-gray-500"
   const classCurrentPage = "hover:underline text-gray-500"
 
-  useEffect(() => {
-    const hasPreviousPages = page - 1 <= 1 ? false : true
-    const hasLaterPages = page + 1 >= numPages ? false : true
-    setHasPrevLatPages([hasPreviousPages, hasLaterPages])
-
+  const calculatePagesToShow = () => {
     if (isFirstPage) {
-      if (numPages >= 3) {
-        setNumbersToShow([1, 2, 3])
-      } else if (numPages == 2) {
-        setNumbersToShow([1, 2, 0])
-      } else {
-        setNumbersToShow([1, 0, 0])
-      }
+      if (numPages >= 3) setNumbersToShow([1, 2, 3])
+      else if (numPages === 2) setNumbersToShow([1, 2, 0])
+      else setNumbersToShow([1, 0, 0])
     } else if (isLastPage) {
-      if (page == 2) {
-        setNumbersToShow([1, 2])
-      } else {
-        setNumbersToShow([page - 2, page - 1, page])
-      }
+      if (page === 2) setNumbersToShow([1, 2])
+      else setNumbersToShow([page - 2, page - 1, page])
     } else {
       setNumbersToShow([page - 1, page, page + 1])
     }
+  }
+
+  const calculatePrevNextPages = () => {
+    const hasPreviousPages = page - 1 > 1
+    const hasLaterPages = page + 1 < numPages
+    setHasPrevLatPages([hasPreviousPages, hasLaterPages])
+  }
+
+  useEffect(() => {
+    calculatePrevNextPages()
+    calculatePagesToShow()
   }, [page, numPages, isFirstPage, isLastPage])
+
+  const renderPageLink = (pageNumber: number) => (
+    <a
+      key={pageNumber}
+      href={`${categoryPath}${pageNumber}`}
+      className={
+        page === pageNumber ? classCurrentPage : "hover:underline"
+      }
+    >
+      {pageNumber}
+    </a>
+  )
+
+  const renderEllipsisLink = () => <a className="pl-1 pr-1">...</a>
 
   return (
     <nav className="flex">
@@ -58,60 +72,19 @@ const NavPages = () => {
             : `${categoryPath}${page - 1}`
         }
         className={isFirstPage ? classLinkUnavailable : ""}
-        aria-disabled={isFirstPage ? true : false}
+        aria-disabled={isFirstPage}
       >
         <img
           src={arrowNextIcon}
-          alt="Imagem de uma seta para a esquerda, voltar uma página"
+          alt="Navigate to previous page"
           className="h-6 rotate-180 transform"
         />
       </a>
-      {hasPrevLatPages[0] == true ? (
-        <a href={`${categoryPath}1`} className="pr-1">
-          {hasPrevLatPages[0] == true ? "..." : null}
-        </a>
-      ) : null}
-      {numbersToShow[0] != 0 ? (
-        <a
-          href={`${categoryPath}${numbersToShow[0]}`}
-          className={
-            page == numbersToShow[0]
-              ? classCurrentPage
-              : `hover:underline`
-          }
-        >
-          {numbersToShow[0]}
-        </a>
-      ) : null}
-      {numbersToShow[1] != 0 ? (
-        <a
-          href={`${categoryPath}${numbersToShow[1]}`}
-          className={
-            page == numbersToShow[1]
-              ? classCurrentPage
-              : `hover:underline`
-          }
-        >
-          {numbersToShow[1]}
-        </a>
-      ) : null}
-      {numbersToShow[2] != 0 ? (
-        <a
-          href={`${categoryPath}${numbersToShow[2]}`}
-          className={
-            page == numbersToShow[2]
-              ? classCurrentPage
-              : `hover:underline`
-          }
-        >
-          {numbersToShow[2]}
-        </a>
-      ) : null}
-      {hasPrevLatPages[1] == true ? (
-        <a href={`${categoryPath}${numPages}`} className=" pl-1">
-          {hasPrevLatPages[1] == true ? "..." : null}
-        </a>
-      ) : null}
+      {hasPrevLatPages[0] && renderEllipsisLink()}
+      {numbersToShow.map((pageNumber) =>
+        pageNumber !== 0 ? renderPageLink(pageNumber) : null,
+      )}
+      {hasPrevLatPages[1] && renderEllipsisLink()}
       <a
         href={
           isLastPage
@@ -119,11 +92,11 @@ const NavPages = () => {
             : `${categoryPath}${page + 1}`
         }
         className={isLastPage ? classLinkUnavailable : ""}
-        aria-disabled={isLastPage ? true : false}
+        aria-disabled={isLastPage}
       >
         <img
           src={arrowNextIcon}
-          alt="Imagem de uma seta para a direita, avançar uma página"
+          alt="Navigate to next page"
           className="h-6"
         />
       </a>
