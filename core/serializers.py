@@ -32,7 +32,6 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def to_representation(self, instance):
-        # Exclui o campo de senha na serialização
         data = super().to_representation(instance)
         data.pop('password', None)
         return data
@@ -65,12 +64,12 @@ class ProductSerializer(serializers.ModelSerializer):
         exclude = ['pictures', 'sizes_available']
 
     def get_picturesLinks(self, obj):
-        if obj.pictures.exists():
-            request = self.context.get('request')
-            base_url = request.build_absolute_uri('/media/')
-            return [base_url + picture.image.name for picture in obj.pictures.all()]
-        else:
+        if not obj.pictures.exists():
             return []
+
+        request = self.context.get('request')
+        base_url = request.build_absolute_uri('/media/')
+        return [base_url + picture.image.name for picture in obj.pictures.all()]
 
 
 class CartSerializer(serializers.ModelSerializer):

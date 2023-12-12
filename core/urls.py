@@ -1,13 +1,14 @@
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import (
     TokenRefreshView
 )
-from rest_framework.routers import DefaultRouter
-from core.views import (CustomTokenObtainPairView, UserDetailsViewSet, UserViewSet, create_user,
-                        PictureViewSet, ProductViewSet, CartViewSet, ProductForOrderViewSet,
-                        OrderViewSet,)
+
+from core.views import (CustomTokenObtainPairView, UserDetailsViewSet, UserViewSet,
+                        create_user, PictureViewSet, ProductViewSet,
+                        CartViewSet, ProductForOrderViewSet, OrderViewSet,)
 
 app_name = 'core'
 

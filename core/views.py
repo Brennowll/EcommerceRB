@@ -83,15 +83,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         category = self.request.query_params.get('category', None)
         queryset = Product.objects.all()
 
-        if category:
-            if ProductCategory.objects.filter(name=category).exists():
-                queryset = queryset.filter(category__name=category)
+        if category and ProductCategory.objects.filter(name=category).exists():
+            queryset = queryset.filter(category__name=category)
 
         if id:
             queryset = queryset.filter(id=id)
 
         queryset = queryset.order_by('id')
-
         return queryset
 
     def list(self, request, *args, **kwargs):
