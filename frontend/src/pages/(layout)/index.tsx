@@ -1,12 +1,14 @@
 import { useContext } from "react"
 import { Routes, Route } from "react-router-dom"
-import Cookies from "js-cookie"
 import { useMutation, useQuery } from "react-query"
+import Cookies from "js-cookie"
+
 import { api } from "../../store/QueryClient"
-import ProductsProvider from "../../store/ProductsProvider"
 import { GlobalStateContext } from "../../store/GlobalStateProvider"
-import NavMenu from "./navMenu"
-import Header from "./header"
+import ProductsProvider from "../../store/ProductsProvider"
+
+import NavMenu from "./NavMenu"
+import Header from "./Header"
 import HomePage from "../home"
 import ProductPage from "../product"
 import LoginPage from "../login"
@@ -74,7 +76,9 @@ const Layout = () => {
           <NavMenu />
         </ProductsProvider>
       ) : null}
+
       <Header />
+
       <Routes>
         <Route
           path="/*"

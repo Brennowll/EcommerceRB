@@ -1,40 +1,21 @@
 import { useState, useContext } from "react"
-import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "react-query"
 import { useNavigate } from "react-router-dom"
+import { z } from "zod"
 import Cookies from "js-cookie"
 import axios from "axios"
+
 import { api } from "../../../store/QueryClient"
 import { GlobalStateContext } from "../../../store/GlobalStateProvider"
+import { signUpUserSchema } from "../../../store/zodSchemas"
+import {
+  renderSignUpAuthInput,
+  renderErrorMessage,
+} from "../../../store/functions"
 
-const signUpSchema = z.object({
-  email: z
-    .string()
-    .nonempty("Email é necessário.")
-    .email("Email não é válido."),
-  password: z
-    .string()
-    .nonempty("Password é necessário.")
-    .min(8, "A senha precisa ter no mínimo 8 caracteres.")
-    .max(40, "A senha é grande demais, máx 40 caracteres.")
-    .refine((value) => value.split("\n").length <= 1, {
-      message: `A senha pode ter no máximo ${1} linha.`,
-    })
-    .refine(
-      (value) => value.trim() !== "",
-      "A senha não pode ter somente espaços.",
-    ),
-})
-
-type SignUpUser = z.infer<typeof signUpSchema>
-
-const renderErrorMessage = (message: string | undefined | null) => {
-  return message ? (
-    <p className="text-myRed pl-1 text-xs text-error">{message}</p>
-  ) : null
-}
+type SignUpUser = z.infer<typeof signUpUserSchema>
 
 const SignUp = () => {
   const { setUserIsLogged } = useContext(GlobalStateContext)
@@ -46,7 +27,7 @@ const SignUp = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<SignUpUser>({
-    resolver: zodResolver(signUpSchema),
+    resolver: zodResolver(signUpUserSchema),
   })
 
   const { mutate } = useMutation({
@@ -109,26 +90,20 @@ const SignUp = () => {
         </h2>
       </div>
       <div className="flex flex-col gap-1">
-        <input
-          type="text"
-          placeholder="Email"
-          className={`rounded-sm px-1
-          py-[0.10rem] focus:outline-none ${
-            errors.email && "border-2 border-error"
-          }`}
-          {...register("email")}
-        />
-        {renderErrorMessage(errors.email?.message)}
-        <input
-          type="password"
-          placeholder="Senha"
-          className={`rounded-sm px-1
-          py-[0.10rem] focus:outline-none ${
-            errors.password && "border-2 border-error"
-          }`}
-          {...register("password")}
-        />
-        {renderErrorMessage(errors.password?.message)}
+        {renderSignUpAuthInput({
+          inputType: "text",
+          placeholder: "Email",
+          zodRegisterFn: register,
+          zodRegisterName: "email",
+          zodErrorCondition: errors.email?.message,
+        })}
+        {renderSignUpAuthInput({
+          inputType: "password",
+          placeholder: "Senha",
+          zodRegisterFn: register,
+          zodRegisterName: "password",
+          zodErrorCondition: errors.password?.message,
+        })}
         {renderErrorMessage(loginApiError)}
       </div>
       <button

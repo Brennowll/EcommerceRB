@@ -1,11 +1,8 @@
 import { useState, useEffect, useContext } from "react"
 import { GlobalStateContext } from "../../../store/GlobalStateProvider"
-import wppIcon from "/src/assets/whatsappIcon.svg"
-import instagramIcon from "/src/assets/instagramIcon.svg"
-import facebookIcon from "/src/assets/facebookIcon.svg"
-import phoneIcon from "/src/assets/phoneIcon.svg"
 import cartIcon from "/src/assets/cartIcon.svg"
 import menuIcon from "/src/assets/menuIcon.svg"
+import { renderContactIcons } from "../../../store/functions"
 
 const Header = () => {
   const { navMenuIsOpen, setNavMenuIsOpen } = useContext(
@@ -31,42 +28,32 @@ const Header = () => {
     }
   }, [])
 
-  const renderContactIcons = () => (
+  const renderIcon = (
+    src: string,
+    alt: string,
+    className?: string,
+    isLink?: boolean,
+    link?: string,
+  ): JSX.Element =>
+    !isLink && !link ? (
+      <img src={src} alt={alt} className={className} />
+    ) : (
+      <a href={link} target="_blank">
+        <img src={src} alt={alt} className={className} />
+      </a>
+    )
+
+  const renderContactContainer = () => (
     <div className="hidden items-center justify-center gap-2 lg:grid">
       <p className="text-center font-bauhausRegular">Contatos</p>
-      <div className="flex w-32 flex-row justify-center gap-2">
-        {renderIcon(
-          wppIcon,
-          "Ícone do aplicativo whatsapp",
-          "h-6 transition-all hover:h-7",
-        )}
-        {renderIcon(
-          instagramIcon,
-          "Ícone do aplicativo instagram",
-          "h-6 transition-all hover:h-7",
-          true,
-          "https://www.instagram.com/boutiquerimini/",
-        )}
-        {renderIcon(
-          facebookIcon,
-          "Ícone do aplicativo facebook",
-          "h-6 transition-all hover:h-7",
-          true,
-          "https://pt-br.facebook.com/boutiquerimini/",
-        )}
-        {renderIcon(
-          phoneIcon,
-          "Ícone de um telefone",
-          "h-6 transition-all hover:h-7",
-        )}
-      </div>
+      {renderContactIcons()}
     </div>
   )
 
   const renderAuthLinks = () => (
     <div
       className="hidden items-center justify-center md:flex md:flex-col
-      [&>a]:font-bauhausRegular"
+        [&>a]:font-bauhausRegular"
     >
       {renderNavLink("/login", "Cadastre-se", "hover:underline")}
       {renderNavLink("/login", "Iniciar-sessão", "hover:underline")}
@@ -85,31 +72,6 @@ const Header = () => {
     </div>
   )
 
-  const renderMenuIcon = () =>
-    windowWidth < 1024 && (
-      <button
-        className="flex items-center justify-center px-6"
-        onClick={handleMenuButtonClick}
-      >
-        {renderIcon(menuIcon, "ícone do menú", "h-10 sm:h-12")}
-      </button>
-    )
-
-  const renderIcon = (
-    src: string,
-    alt: string,
-    className?: string,
-    isLink?: boolean,
-    link?: string,
-  ): JSX.Element =>
-    !isLink && !link ? (
-      <img src={src} alt={alt} className={className} />
-    ) : (
-      <a href={link} target="_blank">
-        <img src={src} alt={alt} className={className} />
-      </a>
-    )
-
   const renderNavLink = (
     href: string,
     text: string,
@@ -119,6 +81,16 @@ const Header = () => {
       {text}
     </a>
   )
+
+  const renderMenuIcon = () =>
+    windowWidth < 1024 && (
+      <button
+        className="flex items-center justify-center px-6"
+        onClick={handleMenuButtonClick}
+      >
+        {renderIcon(menuIcon, "ícone do menú", "h-10 sm:h-12")}
+      </button>
+    )
 
   return (
     <header
@@ -137,13 +109,14 @@ const Header = () => {
             "w-60 object-cover sm:h-20 md:ml-2 md:h-28 md:w-80 xl:ml-0",
           )}
         </a>
+
         <nav
           className="flex h-full flex-row items-center
           [&>div:last-child]:border-r-0 [&>div]:h-full [&>div]:max-h-20
           [&>div]:border-r-2 [&>div]:border-secondaryShade [&>div]:px-6
           [&>div]:py-4"
         >
-          {renderContactIcons()}
+          {renderContactContainer()}
           {renderAuthLinks()}
           {renderCartIcon()}
           {renderMenuIcon()}

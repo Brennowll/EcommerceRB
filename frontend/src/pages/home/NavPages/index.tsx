@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, Link } from "react-router-dom"
 import { ProductsContext } from "../../../store/ProductsProvider"
 import arrowNextIcon from "/src/assets/arrowNextIcon.svg"
 
@@ -49,57 +49,84 @@ const NavPages = () => {
     calculatePagesToShow()
   }, [page, numPages, isFirstPage, isLastPage])
 
+  const renderArrowLink = (previousOrNext: string) => {
+    const arrowLinkElement = (
+      to: string,
+      unavailableCondition: boolean,
+      altMessage: string,
+      imgClass?: string,
+    ) => {
+      return (
+        <Link
+          to={to}
+          className={unavailableCondition ? classLinkUnavailable : ""}
+          aria-disabled={unavailableCondition}
+        >
+          <img
+            src={arrowNextIcon}
+            alt={altMessage}
+            className={`h-6 ${imgClass}`}
+          />
+        </Link>
+      )
+    }
+
+    if (previousOrNext == "previous") {
+      const previousLink = isFirstPage
+        ? location.pathname
+        : `${categoryPath}${page - 1}`
+
+      return arrowLinkElement(
+        previousLink,
+        isFirstPage,
+        "Navegue para a página anterior",
+        "rotate-180 transform",
+      )
+    } else {
+      const laterLink = isLastPage
+        ? location.pathname
+        : `${categoryPath}${page + 1}`
+
+      return arrowLinkElement(
+        laterLink,
+        isLastPage,
+        "Navegue para a próxima página",
+      )
+    }
+  }
+
+  const renderEllipsisLink = (previouOrLater: string) =>
+    previouOrLater == "prev"
+      ? hasPrevLatPages[0] && (
+          <a href={`${categoryPath}1`} className="pr-1">
+            ...
+          </a>
+        )
+      : hasPrevLatPages[1] && (
+          <a href={`${categoryPath}${numPages}`} className="pl-1"></a>
+        )
+
   const renderPageLink = (pageNumber: number) => (
-    <a
+    <Link
       key={pageNumber}
-      href={`${categoryPath}${pageNumber}`}
+      to={`${categoryPath}${pageNumber}`}
       className={
         page === pageNumber ? classCurrentPage : "hover:underline"
       }
     >
       {pageNumber}
-    </a>
+    </Link>
   )
-
-  const renderEllipsisLink = () => <a className="pl-1 pr-1">...</a>
 
   return (
     <nav className="flex">
-      <a
-        href={
-          isFirstPage
-            ? location.pathname
-            : `${categoryPath}${page - 1}`
-        }
-        className={isFirstPage ? classLinkUnavailable : ""}
-        aria-disabled={isFirstPage}
-      >
-        <img
-          src={arrowNextIcon}
-          alt="Navigate to previous page"
-          className="h-6 rotate-180 transform"
-        />
-      </a>
-      {hasPrevLatPages[0] && renderEllipsisLink()}
+      {renderArrowLink("previous")}
+      {renderEllipsisLink("previous")}
       {numbersToShow.map((pageNumber) =>
         pageNumber !== 0 ? renderPageLink(pageNumber) : null,
       )}
-      {hasPrevLatPages[1] && renderEllipsisLink()}
-      <a
-        href={
-          isLastPage
-            ? location.pathname
-            : `${categoryPath}${page + 1}`
-        }
-        className={isLastPage ? classLinkUnavailable : ""}
-        aria-disabled={isLastPage}
-      >
-        <img
-          src={arrowNextIcon}
-          alt="Navigate to next page"
-          className="h-6"
-        />
-      </a>
+      {renderEllipsisLink("later")}
+      {renderArrowLink("later")}
     </nav>
   )
 }

@@ -48,17 +48,8 @@ def create_user(request):
     serializer = UserSerializer(data=request.data)
 
     if serializer.is_valid():
-        username = serializer.validated_data.get('username')
-        email = serializer.validated_data.get('email')
-
-        if email and User.objects.filter(email=email).exists():
-            return Response({"error": "Email already exists"}, status=HTTP_400_BAD_REQUEST)
-
-        if username and User.objects.filter(username=username).exists():
-            return Response({"error": "Username already exists"}, status=HTTP_400_BAD_REQUEST)
-
         user = serializer.save()
-        return Response({"message": "User created successfully"}, status=HTTP_201_CREATED)
+        return Response({"message": "User created succesfully. Please login"}, status=HTTP_201_CREATED)
 
     return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -95,13 +86,13 @@ class ProductViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         id = self.request.query_params.get('id', None)
-        page = self.paginate_queryset(queryset)
 
         if id:
             queryset = self.get_queryset()
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
 
+        page = self.paginate_queryset(queryset)
         categories = ProductCategory.objects.all()
         categories_serializer = CategorySerializer(categories, many=True)
 

@@ -1,10 +1,10 @@
 import { useContext } from "react"
-import CategoryLink from "../CategoryLink"
 import { ProductsContext } from "../../store/ProductsProvider"
+import CategoryLink from "../CategoryLink"
 
 const Categories = () => {
   const { categories } = useContext(ProductsContext)
-  const categoriesButtons = categories?.map((categorie) => (
+  const categoriesLinks = categories?.map((categorie) => (
     <CategoryLink name={categorie} key={categorie} />
   ))
 
@@ -15,7 +15,7 @@ const Categories = () => {
         link="pecas"
         key={"Todas as peças"}
       />
-      {categoriesButtons}
+      {categoriesLinks}
     </>
   )
 }
