@@ -70,6 +70,14 @@ export const renderErrorMessage = (
   ) : null
 }
 
+export const renderSucessMessage = (
+  message: string | undefined | null,
+) => {
+  return message ? (
+    <p className="pl-1 text-xs text-sucess">{message}</p>
+  ) : null
+}
+
 export const renderSignInAuthInput = ({
   inputType,
   placeholder,

@@ -8,7 +8,7 @@ from rest_framework_simplejwt.views import (
 
 from core.views import (CustomTokenObtainPairView, UserDetailsViewSet, UserViewSet,
                         create_user, PictureViewSet, ProductViewSet,
-                        CartViewSet, ProductForOrderViewSet, OrderViewSet,)
+                        ProductForOrderViewSet, OrderViewSet,)
 
 app_name = 'core'
 
@@ -18,7 +18,6 @@ router.register(r'users_details', UserDetailsViewSet,
                 basename='users_details')
 router.register(r'pictures', PictureViewSet, basename='picture')
 router.register(r'products', ProductViewSet, basename='product')
-router.register(r'carts', CartViewSet, basename='cart')
 router.register(r'products_for_order', ProductForOrderViewSet,
                 basename='products_for_order')
 router.register(r'orders', OrderViewSet, basename='order')

@@ -29,6 +29,14 @@ const HomePage = () => {
       : "Todas as peças"
   const categoryName = capitalizeEndPoint
 
+  const isStrangeName =
+    categoryName == "Cal%C3%A7as" || categoryName == "Acess%C3%B3rios"
+  const categoryDebugName = isStrangeName
+    ? categoryName == "Cal%C3%A7as"
+      ? "Calças"
+      : "Acessórios"
+    : null
+
   const renderProducts = () => {
     return products?.map((product) => (
       <Product
@@ -65,7 +73,7 @@ const HomePage = () => {
           <div className="flex flex-row items-end justify-center gap-2">
             <div className="h-4 w-4 rounded-full bg-secondaryShade sm:h-6 sm:w-6"></div>
             <h2 className="text-base leading-3 sm:text-xl sm:leading-6">
-              {categoryName}
+              {isStrangeName ? categoryDebugName : categoryName}
             </h2>
           </div>
           <NavPages />

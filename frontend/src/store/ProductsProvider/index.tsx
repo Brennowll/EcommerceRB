@@ -17,7 +17,7 @@ type Product = {
   picturesLinks: string[]
   name: string
   description: string
-  sizesAvailable: string
+  availableSizes: string
   price: number
 }
 

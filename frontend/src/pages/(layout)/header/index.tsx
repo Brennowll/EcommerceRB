@@ -3,6 +3,7 @@ import { GlobalStateContext } from "../../../store/GlobalStateProvider"
 import cartIcon from "/src/assets/cartIcon.svg"
 import menuIcon from "/src/assets/menuIcon.svg"
 import { renderContactIcons } from "../../../store/functions"
+import AuthLinks from "../../../components/AuthLinks"
 
 const Header = () => {
   const { navMenuIsOpen, setNavMenuIsOpen } = useContext(
@@ -50,16 +51,6 @@ const Header = () => {
     </div>
   )
 
-  const renderAuthLinks = () => (
-    <div
-      className="hidden items-center justify-center md:flex md:flex-col
-        [&>a]:font-bauhausRegular"
-    >
-      {renderNavLink("/login", "Cadastre-se", "hover:underline")}
-      {renderNavLink("/login", "Iniciar-sessão", "hover:underline")}
-    </div>
-  )
-
   const renderCartIcon = () => (
     <div className="hidden items-center justify-center md:flex">
       <a href="/carrinho">
@@ -70,16 +61,6 @@ const Header = () => {
         )}
       </a>
     </div>
-  )
-
-  const renderNavLink = (
-    href: string,
-    text: string,
-    className?: string,
-  ): JSX.Element => (
-    <a href={href} className={className}>
-      {text}
-    </a>
   )
 
   const renderMenuIcon = () =>
@@ -117,7 +98,7 @@ const Header = () => {
           [&>div]:py-4"
         >
           {renderContactContainer()}
-          {renderAuthLinks()}
+          <AuthLinks containerClass="hidden md:flex md:flex-col" />
           {renderCartIcon()}
           {renderMenuIcon()}
         </nav>

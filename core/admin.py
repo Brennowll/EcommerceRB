@@ -1,6 +1,6 @@
 from django.contrib import admin
 from core.models import (UserDetails, ProductCategory, Product,
-                         Cart, Order, Picture)
+                         ProductForOrder, ProductOrdered, Order, Picture)
 
 
 @admin.register(UserDetails)
@@ -24,16 +24,21 @@ class PictureAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'category',)
-    list_filter = ('category',)
+    list_filter = ('category', 'is_available')
 
 
-@admin.register(Cart)
-class CartAdmin(admin.ModelAdmin):
-    list_display = ('user',)
-    filter_horizontal = ('products',)
+@admin.register(ProductForOrder)
+class ProductForOrder(admin.ModelAdmin):
+    list_display = ('user', 'product')
+    list_filter = ('user',)
+
+
+@admin.register(ProductOrdered)
+class ProductOrdered(admin.ModelAdmin):
+    pass
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('user', 'status', 'date',)
-    list_filter = ('status',)
+    list_filter = ('user', 'status',)

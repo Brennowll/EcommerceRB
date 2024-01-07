@@ -6,29 +6,15 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 class UserDetails(models.Model):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, blank=False, null=False)
-    adress = models.CharField(max_length=50)
+        User, on_delete=models.CASCADE, null=False)
+    cep = models.CharField(max_length=10, blank=True, null=True)
+    adress = models.CharField(max_length=50, blank=True, null=True)
     cellphone = PhoneNumberField(unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         # pylint: disable=no-member
         return self.user.username
         # pylint: enable=no-membe
-
-    def clean(self):
-        if self.cellphone:
-            cellphone_str = str(self.cellphone)
-            if not cellphone_str.isdigit() or len(cellphone_str) < 11:
-                raise ValidationError(
-                    "O número de telefone deve ter pelo menos 11 dígitos.")
-
-    def save(self, *args, **kwargs):
-        if self.cellphone:
-            cellphone_number = str(self.cellphone.national_number)
-            if not cellphone_number.startswith('55'):
-                self.cellphone = f'+55{cellphone_number}'
-
-        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name_plural = 'Users Details'
@@ -60,34 +46,38 @@ class Picture(models.Model):
 class Product(models.Model):
     category = models.ForeignKey(
         ProductCategory, on_delete=models.PROTECT, to_field='name')
-    pictures = models.ManyToManyField(Picture, null=True)
+    pictures = models.ManyToManyField(Picture)
     name = models.CharField(max_length=50)
     description = models.TextField(max_length=250)
-    sizes_available = models.CharField(max_length=100)
+    available_sizes = models.CharField(max_length=100)
     price = models.FloatField()
+    is_available = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.name)
 
 
-class Cart(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    products = models.ManyToManyField(Product, through='ProductForOrder')
-
-
 class ProductForOrder(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     size = models.CharField(max_length=10)
-    color = models.CharField(max_length=10)
     quantity = models.PositiveIntegerField()
 
     class Meta:
-        unique_together = ('cart', 'product', 'size', 'color')
+        unique_together = ('user', 'product', 'size')
+
+
+class ProductOrdered(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    size = models.CharField(max_length=10)
+    quantity = models.PositiveIntegerField()
+    related_order = models.ForeignKey(
+        'Order', blank=True, null=True, on_delete=models.CASCADE)
 
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    products = models.ManyToManyField(ProductForOrder)
+    products = models.ManyToManyField(ProductOrdered, blank=True, null=True)
+    adress = models.CharField(max_length=90)
     status = models.CharField(max_length=50)
     date = models.DateField(auto_now_add=True)

@@ -6,12 +6,12 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from core.serializers import (UserDetailsSerializer, TokenPairSerializer, CategorySerializer,
                               UserSerializer, PictureSerializer, ProductSerializer,
-                              CartSerializer, ProductForOrderSerializer, OrderSerializer)
-from core.models import (UserDetails, ProductCategory, Cart,
-                         ProductForOrder, Order, Product, Picture)
+                              ProductForOrderSerializer, OrderSerializer)
+from core.models import (UserDetails, ProductCategory, ProductForOrder,
+                         Order, Product, Picture)
 # import bleach
 
 
@@ -39,7 +39,39 @@ class UserDetailsViewSet(viewsets.ModelViewSet):
         return UserDetails.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        create_if_not_exist = request.query_params.get(
+            'create_if_not_exist', False)
+        print(create_if_not_exist)
+        partial = kwargs.pop('partial', False)
+
+        if create_if_not_exist:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=HTTP_201_CREATED)
+
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data, status=HTTP_200_OK)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(
+            queryset.first(),
+            many=False,
+            context={'request': request}
+        )
+
+        response_data = serializer.data
+
+        return Response(response_data, status=HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -49,7 +81,9 @@ def create_user(request):
 
     if serializer.is_valid():
         user = serializer.save()
-        return Response({"message": "User created succesfully. Please login"}, status=HTTP_201_CREATED)
+        return Response(
+            {"message": "User created succesfully. Please login"},
+            status=HTTP_201_CREATED)
 
     return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
@@ -116,28 +150,54 @@ class ProductViewSet(viewsets.ModelViewSet):
         })
 
 
-class CartViewSet(viewsets.ModelViewSet):
-    serializer_class = CartSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Cart.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
-
-
 class ProductForOrderViewSet(viewsets.ModelViewSet):
     serializer_class = ProductForOrderSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user_cart = Cart.objects.filter(user=self.request.user)
-        return ProductForOrder.objects.filter(cart=user_cart)
+        return ProductForOrder.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        user_cart = Cart.objects.filter(user=self.request.user)
-        return serializer.save(cart=user_cart)
+        product = serializer.validated_data['product']
+        size = serializer.validated_data['size']
+
+        specified_product = ProductForOrder.objects.filter(
+            user=self.request.user,
+            product=product,
+            size=size
+        ).first()
+
+        if specified_product:
+            specified_product.quantity += 1
+            return specified_product.save()
+
+        return serializer.save(
+            user=self.request.user,
+            quantity=1
+        )
+
+    def perform_destroy(self, instance):
+        if instance.quantity > 1:
+            instance.quantity -= 1
+            return instance.save()
+
+        instance.delete()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(
+            queryset, many=True, context={'request': request})
+
+        response_data = serializer.data
+
+        for item in response_data:
+            product_id = item.get('product')
+
+            product_data = Product.objects.get(id=product_id)
+            item['product'] = ProductSerializer(
+                product_data, context={'request': request}).data
+
+        return Response(response_data, status=HTTP_200_OK)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -149,3 +209,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(
+            queryset, many=True, context={'request': request}
+        )
+
+        # Retorna apenas a lista de resultados
+        return Response(serializer.data, status=HTTP_200_OK)

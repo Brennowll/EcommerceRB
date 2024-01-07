@@ -12,11 +12,39 @@ import Header from "./Header"
 import HomePage from "../home"
 import ProductPage from "../product"
 import LoginPage from "../login"
+import CartPage from "../cart"
+import ProfilePage from "../profile"
 
 const Layout = () => {
-  const { navMenuIsOpen, setUserIsLogged, setUserData } = useContext(
-    GlobalStateContext,
-  )
+  const {
+    navMenuIsOpen,
+    userIsLogged,
+    setUserIsLogged,
+    setUserData,
+    setUserDetails,
+  } = useContext(GlobalStateContext)
+
+  const userDetailsQuery = useQuery({
+    queryKey: ["userDetails"],
+    queryFn: async () => {
+      const token = Cookies.get("access_token")
+
+      if (!token) {
+        return Promise.reject(new Error("Token not found"))
+      }
+
+      const response = await api.get("users_details", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      return response.data
+    },
+    onSuccess: (data) => {
+      setUserDetails(data)
+    },
+  })
 
   const refreshTokenMutation = useMutation({
     mutationFn: async (refreshToken: string) => {
@@ -90,6 +118,8 @@ const Layout = () => {
         />
         <Route path="/produtos/*" element={<ProductPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/carrinho" element={<CartPage />} />
+        <Route path="/perfil" element={<ProfilePage />} />
       </Routes>
     </>
   )

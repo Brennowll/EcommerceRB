@@ -3,12 +3,20 @@ import React, {
   ReactNode,
   SetStateAction,
   createContext,
+  useEffect,
   useState,
 } from "react"
 
-type userData = {
+type UserData = {
   username: string
   email: string
+}
+
+type UserDetails = {
+  id: number
+  cep: string
+  adress: string
+  cellphone: string
 }
 
 type GlobalStateContextType = {
@@ -16,8 +24,10 @@ type GlobalStateContextType = {
   setNavMenuIsOpen: Dispatch<SetStateAction<boolean>>
   userIsLogged: boolean | null
   setUserIsLogged: Dispatch<SetStateAction<boolean | null>>
-  userData: userData | null
-  setUserData: Dispatch<SetStateAction<userData | null>>
+  userData: UserData | null
+  setUserData: Dispatch<SetStateAction<UserData | null>>
+  userDetails: UserDetails | null
+  setUserDetails: Dispatch<SetStateAction<UserDetails | null>>
 }
 
 export const GlobalStateContext =
@@ -34,7 +44,10 @@ const GlobalStateProvider: React.FC<GlobalStateProviderProps> = ({
   const [userIsLogged, setUserIsLogged] = useState<boolean | null>(
     null,
   )
-  const [userData, setUserData] = useState<userData | null>(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(
+    null,
+  )
 
   return (
     <GlobalStateContext.Provider
@@ -45,6 +58,8 @@ const GlobalStateProvider: React.FC<GlobalStateProviderProps> = ({
         setUserIsLogged,
         userData,
         setUserData,
+        userDetails,
+        setUserDetails,
       }}
     >
       {children}

@@ -2,13 +2,13 @@ import { useContext } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { ProductsContext } from "../../store/ProductsProvider"
 
-type Props = {
+type CategoryLinkProps = {
   name: string
   onClick?: () => void
   link?: string
 }
 
-const CategoryLink = (props: Props) => {
+const CategoryLink = (props: CategoryLinkProps) => {
   const { setCategoryForApi } = useContext(ProductsContext)
   const linkToRedirect = props.link
     ? `/${props.link}`
@@ -17,7 +17,15 @@ const CategoryLink = (props: Props) => {
   const { pathname: pathName } = useLocation()
   const pathParts = pathName.split("/")
   const linkToSelect = props.link || props.name.toLowerCase()
-  const isLinkLocation = pathParts[1] === linkToSelect
+  const isStrangeLink =
+    pathParts[1] == "cal%C3%A7as" || pathParts[1] == "acess%C3%B3rios"
+  const debugLink = isStrangeLink
+    ? pathParts[1] == "cal%C3%A7as"
+      ? "calças"
+      : "acessórios"
+    : pathParts[1]
+
+  const isLinkLocation = debugLink === linkToSelect
   const classSelected = isLinkLocation
     ? "bg-secondary"
     : "bg-transparent"

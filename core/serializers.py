@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from core.models import (UserDetails, ProductCategory, Picture,
-                         Product, Cart, ProductForOrder, Order)
+                         Product, ProductForOrder, ProductOrdered, Order)
 
 
 class TokenPairSerializer(TokenObtainPairSerializer):
@@ -26,6 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 'A user with that email already exists.')
+
         return value
 
     def create(self, validated_data):
@@ -35,18 +36,20 @@ class UserSerializer(serializers.ModelSerializer):
         )
         user.set_password(validated_data['password'])
         user.save()
+
         return user
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data.pop('password', None)
+
         return data
 
 
 class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDetails
-        fields = '__all__'
+        exclude = ['user']
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -63,11 +66,11 @@ class PictureSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     picturesLinks = serializers.SerializerMethodField()
-    sizesAvailable = serializers.CharField(source='sizes_available')
+    availableSizes = serializers.CharField(source='available_sizes')
 
     class Meta:
         model = Product
-        exclude = ['pictures', 'sizes_available']
+        exclude = ['pictures', 'available_sizes', 'is_available']
 
     def get_picturesLinks(self, obj):
         if not obj.pictures.exists():
@@ -78,18 +81,24 @@ class ProductSerializer(serializers.ModelSerializer):
         return [base_url + picture.image.name for picture in obj.pictures.all()]
 
 
-class CartSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Cart
-        exclude = ['user']
-
-
 class ProductForOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductForOrder
+        exclude = ['user']
+
+
+class ProductOrderedSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)  # Adicione esta linha
+
+    class Meta:
+        model = ProductOrdered
+        fields = '__all__'
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    products = ProductOrderedSerializer(
+        many=True, read_only=True, source='productordered_set')
+
     class Meta:
         model = Order
         exclude = ['user']

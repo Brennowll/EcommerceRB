@@ -1,8 +1,10 @@
 import { useContext } from "react"
 import { Link } from "react-router-dom"
+
 import { GlobalStateContext } from "../../../store/GlobalStateProvider"
-import Categories from "../../../components/Categories"
 import { renderContactIcons } from "../../../store/functions"
+import AuthLinks from "../../../components/AuthLinks"
+import Categories from "../../../components/Categories"
 import cartIcon from "/src/assets/cartIcon.svg"
 import xIcon from "/src/assets/xIcon.svg"
 
@@ -17,23 +19,12 @@ const NavMenu = () => {
 
   const renderCartIcon = () => (
     <div className="flex items-center justify-center">
-      <Link to={"/"}>
+      <Link to={"/carrinho"}>
         <img
           src={cartIcon}
           alt="ícone do carrinho de compras"
           className="h-10"
         />
-      </Link>
-    </div>
-  )
-
-  const renderAuthLinks = () => (
-    <div className="flex flex-col items-center justify-center">
-      <Link to={"/"} className="font-bauhausRegular hover:underline">
-        Cadastre-se
-      </Link>
-      <Link to={"/"} className="font-bauhausRegular hover:underline">
-        Iniciar-sessão
       </Link>
     </div>
   )
@@ -61,12 +52,12 @@ const NavMenu = () => {
         border-primaryShade bg-primary p-4"
       >
         <nav
-          className="flex w-72 flex-row justify-between px-2
+          className="flex w-72 flex-row justify-around px-2
           [&>div:last-child]:border-r-0 [&>div:last-child]:pr-0 [&>div]:border-r-2
           [&>div]:border-secondaryShade [&>div]:border-opacity-70 [&>div]:py-1 [&>div]:pr-7"
         >
           {renderCartIcon()}
-          {renderAuthLinks()}
+          <AuthLinks containerClass="flex flex-col" />
           {renderCloseButton()}
         </nav>
 

@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react"
-import { useQuery } from "react-query"
-import { useLocation } from "react-router-dom"
+import { useEffect, useState, useContext } from "react"
+import { useQuery, useMutation } from "react-query"
+import { useLocation, useNavigate } from "react-router-dom"
+import Cookies from "js-cookie"
+
 import { api } from "../../store/QueryClient"
+import { GlobalStateContext } from "../../store/GlobalStateProvider"
+import { renderErrorMessage } from "../../store/functions"
 import ArrowNextIcon from "/src/assets/ArrowNextIcon.svg"
 
 type Product = {
@@ -9,18 +13,22 @@ type Product = {
   picturesLinks: string[]
   name: string
   description: string
-  sizesAvailable: string
+  availableSizes: string
   price: number
 }
 
 const ProductPage = () => {
+  const { userData } = useContext(GlobalStateContext)
+
   const [pictureNumSelected, setPictureNumSelected] =
     useState<number>(0)
-  const [sizesAvailable, setSizesAvailable] = useState<string[]>([])
+  const [availableSizes, setAvailableSizes] = useState<string[]>([])
   const [sizeSelected, setSizeSelected] = useState<string>()
   const [sizeNotSelectedError, setSizeNotSelectedError] =
     useState<boolean>(false)
+  const [apiError, setApiError] = useState<string | null>()
 
+  const navigate = useNavigate()
   const location = useLocation()
   const pathParts = location.pathname.split("/")
   const productIdPath = pathParts[pathParts.length - 1]
@@ -37,11 +45,52 @@ const ProductPage = () => {
     refetchOnWindowFocus: false,
   })
 
+  const { mutate } = useMutation({
+    mutationKey: ["addToCartMutation"],
+    mutationFn: async () => {
+      const token = Cookies.get("access_token")
+
+      if (!token) {
+        return Promise.reject(new Error("Token not found"))
+      }
+
+      const response = await api.post(
+        "products_for_order/",
+        {
+          product: productIdPath,
+          size: sizeSelected,
+          quantity: 1,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      return response.data
+    },
+    onSuccess: () => {
+      setApiError(null)
+      navigate("/carrinho/")
+    },
+    onError: () => {
+      setApiError("Ocorreu um erro, tente novamente mais tarde")
+    },
+  })
+
   const handleAddToCartClick = () => {
     if (!sizeSelected) {
       setSizeNotSelectedError(true)
       return
     }
+
+    if (!userData) {
+      navigate("/login")
+      return
+    }
+
+    mutate()
   }
 
   const handlePictureButtonClick = (index: number) => {
@@ -61,15 +110,15 @@ const ProductPage = () => {
       return
     }
 
-    const sizesAvailable = data[0].sizesAvailable.split(",")
+    const availableSizes = data[0].availableSizes.split(",")
     const sizesTemp: string[] = []
 
-    for (const sizes of sizesAvailable) {
+    for (const sizes of availableSizes) {
       const sizeName = sizes.split("-")[1].trim().toUpperCase()
       sizesTemp.push(sizeName)
     }
 
-    setSizesAvailable(sizesTemp)
+    setAvailableSizes(sizesTemp)
   }, [data])
 
   const renderPictureButtons = () => {
@@ -95,7 +144,7 @@ const ProductPage = () => {
   }
 
   const renderSizeButtons = () => {
-    return sizesAvailable.map((size, index) => (
+    return availableSizes.map((size, index) => (
       <button
         key={index}
         className={`relative h-7 w-10 rounded-md shadow-md transition-all ${
@@ -186,6 +235,7 @@ const ProductPage = () => {
             {renderSizeButtons()}
           </div>
         </div>
+        {apiError ? renderErrorMessage(apiError) : null}
         <button
           className="mt-1 h-11 w-full rounded-md border-2 border-primaryShade
           bg-primary shadow-md transition-all hover:bg-orange-200"

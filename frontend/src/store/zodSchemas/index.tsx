@@ -3,11 +3,12 @@ import { z } from "zod"
 export const signUpUserSchema = z.object({
   email: z
     .string()
-    .nonempty("Email é necessário.")
-    .email("Email não é válido."),
+    .email("Email não é válido.")
+    .refine((value) => value.trim() !== "", {
+      message: "O email não pode ser vazio.",
+    }),
   password: z
     .string()
-    .nonempty("Password é necessário.")
     .min(8, "A senha precisa ter no mínimo 8 caracteres.")
     .max(40, "A senha é grande demais, máx 40 caracteres.")
     .refine((value) => value.split("\n").length <= 1, {
@@ -16,14 +17,16 @@ export const signUpUserSchema = z.object({
     .refine(
       (value) => value.trim() !== "",
       "A senha não pode ter somente espaços.",
-    ),
+    )
+    .refine((value) => value.trim() !== "", {
+      message: "A senha não pode ser vazia.",
+    }),
 })
 
 export const signInUserSchema = z
   .object({
     username: z
       .string()
-      .nonempty("Nome de usuário é obrigatório.")
       .min(3, "Nome de usuário deve ter pelo menos 3 caracteres.")
       .max(
         30,
@@ -35,10 +38,12 @@ export const signInUserSchema = z
       .refine(
         (value) => value.trim() !== "",
         "O nome de usuário não pode ser apenas espaços.",
-      ),
+      )
+      .refine((value) => value.trim() !== "", {
+        message: "O nome de usuário é obrigatório.",
+      }),
     email: z
       .string()
-      .nonempty("Email é obrigatório.")
       .min(3, "Email deve ter pelo menos 3 caracteres.")
       .max(40, "Email excede o limite de caracteres, Máx 40.")
       .email("Email não é válido.")
@@ -48,10 +53,12 @@ export const signInUserSchema = z
       .refine(
         (value) => value.trim() !== "",
         "O email não pode ser apenas espaços.",
-      ),
+      )
+      .refine((value) => value.trim() !== "", {
+        message: "O email é obrigatório",
+      }),
     password: z
       .string()
-      .nonempty("Senha é obrigatória.")
       .min(8, "Senha deve ter pelo menos 8 caracteres.")
       .max(40, "Senha excede o limite de caracteres, Máx 40.")
       .refine((value) => value.split("\n").length <= 1, {
@@ -70,10 +77,15 @@ export const signInUserSchema = z
         return (
           hasUpperCase && hasLowerCase && hasDigits && hasSpecialChars
         )
-      }, "Senha deve incluir letras maiúsculas, minúsculas, dígitos e caracteres especiais."),
+      }, "Senha deve incluir letras maiúsculas, minúsculas, dígitos e caracteres especiais.")
+      .refine((value) => value.trim() !== "", {
+        message: "A senha é obrigatória",
+      }),
     confirmPassword: z
       .string()
-      .nonempty("Confirmação da senha é obrigatória."),
+      .refine((value) => value.trim() !== "", {
+        message: "A confirmação da senha é obrigatória",
+      }),
   })
   .superRefine(({ confirmPassword, password }, ctx) => {
     if (confirmPassword !== password) {

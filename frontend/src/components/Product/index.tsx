@@ -6,6 +6,8 @@ type ProductProps = {
   title: string
   sizesAndColors?: string
   price?: number
+  size?: string
+  isForOrderPage?: boolean
 }
 
 const Product = (props: ProductProps) => {
@@ -17,8 +19,10 @@ const Product = (props: ProductProps) => {
     >
       <img
         src={props.imgURLs}
-        className="h-72 w-56 rounded-md
-        object-cover shadow-md shadow-zinc-400"
+        className={`rounded-md
+        object-cover shadow-md shadow-zinc-400 ${
+          props.isForOrderPage ? "h-60 w-44" : "h-72 w-56"
+        }`}
       />
       <div
         className="mt-2 h-fit w-fit
@@ -27,6 +31,7 @@ const Product = (props: ProductProps) => {
       >
         <p>{props.title}</p>
         <p>R${props.price}</p>
+        {props.size ? <p>Tamanho: {props.size}</p> : null}
       </div>
     </Link>
   )
