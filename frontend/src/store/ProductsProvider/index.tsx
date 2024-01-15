@@ -32,6 +32,7 @@ interface Results {
 }
 
 type ProductsContextType = {
+  isFetching: boolean
   categoryForApi: string | null
   setCategoryForApi: Dispatch<SetStateAction<string | null>>
   numPages: number
@@ -68,12 +69,14 @@ const ProductsProvider: React.FC<ProductsProviderProps> = ({
   const location = useLocation()
   const pathParts = location.pathname.split("/")
   const lastPart = pathParts.slice(-1)[0]
-  const page = !isNaN(parseInt(lastPart)) ? null : parseInt(lastPart)
 
-  const { refetch } = useQuery<Product[]>({
+  const { refetch, isFetching } = useQuery<Product[]>({
     queryKey: ["products"],
     queryFn: async () => {
-      const params: ApiParams = buildApiParams(pathParts, page)
+      const params: ApiParams = buildApiParams(
+        pathParts,
+        parseInt(lastPart),
+      )
 
       const response = await api.get("products/", {
         params: params,
@@ -132,11 +135,12 @@ const ProductsProvider: React.FC<ProductsProviderProps> = ({
 
   useEffect(() => {
     refetch()
-  }, [categoryForApi])
+  }, [categoryForApi, lastPart])
 
   return (
     <ProductsContext.Provider
       value={{
+        isFetching,
         categoryForApi,
         setCategoryForApi,
         numPages,

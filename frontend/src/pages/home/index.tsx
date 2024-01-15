@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom"
 
 import { ProductsContext } from "../../store/ProductsProvider"
 import { renderContactIcons } from "../../store/functions"
+import { LoadingSpinner } from "../../components/LoadingSpinner"
 import Categories from "../../components/Categories"
 import Product from "../../components/Product"
 import NavPages from "./NavPages"
@@ -18,7 +19,7 @@ type Product = {
 }
 
 const HomePage = () => {
-  const { products } = useContext(ProductsContext)
+  const { products, isFetching } = useContext(ProductsContext)
 
   const location = useLocation()
   const pathParts = location.pathname.split("/")
@@ -49,7 +50,11 @@ const HomePage = () => {
     ))
   }
 
-  return (
+  return isFetching ? (
+    <div className="flex h-full items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  ) : (
     <div className="flex h-fit flex-row justify-center gap-5 px-5 pt-7">
       <section
         id="categoriesTab"

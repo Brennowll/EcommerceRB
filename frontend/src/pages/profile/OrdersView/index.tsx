@@ -1,6 +1,8 @@
 import { useQuery } from "react-query"
 import Cookies from "js-cookie"
+
 import { api } from "../../../store/QueryClient"
+import { LoadingSpinner } from "../../../components/LoadingSpinner"
 import Order from "./Order"
 
 type Product = {
@@ -17,13 +19,14 @@ type ProductOrdered = {
 }
 
 type Order = {
-  status: string
-  adress: string
+  id: number
   products: ProductOrdered[]
+  adress: string
+  trackingCode: string
 }
 
 const OrdersView = () => {
-  const { data } = useQuery<Order[]>({
+  const { data, isFetching } = useQuery<Order[]>({
     queryKey: ["orders"],
     queryFn: async () => {
       const token = Cookies.get("access_token")
@@ -34,23 +37,28 @@ const OrdersView = () => {
         },
       })
 
-      console.log(response.data)
-
       return response.data
     },
+    refetchOnWindowFocus: false,
   })
 
   return (
-    <div className="flex flex-col gap-4">
-      {data?.map((order, index) => (
-        <Order
-          key={index}
-          productsList={order.products}
-          title={order.status}
-          description={order.adress}
-          buttonText="Copiar código de rastreamento"
-        />
-      ))}
+    <div className="flex flex-col items-center gap-4">
+      {isFetching ? (
+        <LoadingSpinner />
+      ) : data && data.length > 0 ? (
+        data?.map((order) => (
+          <Order
+            key={order.id}
+            id={order.id}
+            productsList={order.products}
+            description={order.adress}
+            trackingCode={order.trackingCode}
+          />
+        ))
+      ) : (
+        "Não há pedidos!"
+      )}
     </div>
   )
 }

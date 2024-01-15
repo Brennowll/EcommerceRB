@@ -77,7 +77,8 @@ class ProductOrdered(models.Model):
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    products = models.ManyToManyField(ProductOrdered, blank=True, null=True)
+    products = models.ManyToManyField(ProductOrdered, blank=True)
     adress = models.CharField(max_length=90)
-    status = models.CharField(max_length=50)
+    stripe_payment_id = models.CharField(max_length=150)
+    tracking_code = models.CharField(max_length=50, blank=True, null=True)
     date = models.DateField(auto_now_add=True)

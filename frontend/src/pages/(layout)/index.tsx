@@ -7,6 +7,7 @@ import { api } from "../../store/QueryClient"
 import { GlobalStateContext } from "../../store/GlobalStateProvider"
 import ProductsProvider from "../../store/ProductsProvider"
 
+import { LoadingSpinner } from "../../components/LoadingSpinner"
 import NavMenu from "./NavMenu"
 import Header from "./Header"
 import HomePage from "../home"
@@ -18,7 +19,6 @@ import ProfilePage from "../profile"
 const Layout = () => {
   const {
     navMenuIsOpen,
-    userIsLogged,
     setUserIsLogged,
     setUserData,
     setUserDetails,
@@ -44,6 +44,7 @@ const Layout = () => {
     onSuccess: (data) => {
       setUserDetails(data)
     },
+    refetchOnWindowFocus: false,
   })
 
   const refreshTokenMutation = useMutation({
@@ -95,9 +96,15 @@ const Layout = () => {
 
       setUserIsLogged(false)
     },
+    refetchOnWindowFocus: false,
   })
 
-  return (
+  return userDetailsQuery.isFetching ||
+    tokenValidationQuery.isFetching ? (
+    <div className="flex h-screen items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  ) : (
     <>
       {navMenuIsOpen ? (
         <ProductsProvider>

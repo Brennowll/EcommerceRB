@@ -47,6 +47,7 @@ const NavPages = () => {
   useEffect(() => {
     calculatePrevNextPages()
     calculatePagesToShow()
+    console.log("render")
   }, [page, numPages, isFirstPage, isLastPage])
 
   const renderArrowLink = (previousOrNext: string) => {
@@ -96,14 +97,16 @@ const NavPages = () => {
   }
 
   const renderEllipsisLink = (previouOrLater: string) =>
-    previouOrLater == "prev"
+    previouOrLater == "previous"
       ? hasPrevLatPages[0] && (
-          <a href={`${categoryPath}1`} className="pr-1">
+          <Link to={`${categoryPath}1`} className="pr-1">
             ...
-          </a>
+          </Link>
         )
       : hasPrevLatPages[1] && (
-          <a href={`${categoryPath}${numPages}`} className="pl-1"></a>
+          <a href={`${categoryPath}${numPages}`} className="pl-1">
+            ...
+          </a>
         )
 
   const renderPageLink = (pageNumber: number) => (

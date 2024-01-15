@@ -4,6 +4,7 @@ import cartIcon from "/src/assets/cartIcon.svg"
 import menuIcon from "/src/assets/menuIcon.svg"
 import { renderContactIcons } from "../../../store/functions"
 import AuthLinks from "../../../components/AuthLinks"
+import { Link } from "react-router-dom"
 
 const Header = () => {
   const { navMenuIsOpen, setNavMenuIsOpen } = useContext(
@@ -83,13 +84,13 @@ const Header = () => {
         py-4 sm:max-w-lg md:max-w-3xl lg:max-w-[63rem] xl:max-w-[67rem]
         2xl:max-w-[83rem]"
       >
-        <a href="/pecas">
+        <Link to="/pecas">
           {renderIcon(
             "/src/assets/RiminiLogoW.png",
             "Logo da Rimini Boutique",
             "w-60 object-cover sm:h-20 md:ml-2 md:h-28 md:w-80 xl:ml-0",
           )}
-        </a>
+        </Link>
 
         <nav
           className="flex h-full flex-row items-center

@@ -48,8 +48,8 @@ const ProductView = (props: ProductViewProps) => {
 
   return (
     <article
-      className="flex h-28 w-full justify-between rounded-lg bg-primary bg-opacity-70
-      p-2 shadow-md sm:h-32"
+      className="flex h-28 w-full justify-between rounded-lg border-2 border-primaryShade
+      bg-primary bg-opacity-30 p-2 shadow-md sm:h-32"
     >
       <div className="flex h-full w-full items-center gap-4">
         <img

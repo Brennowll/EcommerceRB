@@ -40,5 +40,5 @@ class ProductOrdered(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('user', 'status', 'date',)
-    list_filter = ('user', 'status',)
+    list_display = ('user', 'tracking_code', 'date',)
+    list_filter = ('user', 'tracking_code',)

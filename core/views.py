@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets
@@ -7,11 +8,17 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from decouple import config
+import stripe
 from core.serializers import (UserDetailsSerializer, TokenPairSerializer, CategorySerializer,
                               UserSerializer, PictureSerializer, ProductSerializer,
                               ProductForOrderSerializer, OrderSerializer)
 from core.models import (UserDetails, ProductCategory, ProductForOrder,
-                         Order, Product, Picture)
+                         Order, Product, Picture, ProductOrdered)
+
+
+stripe.api_key = config('STRIPE_SECRET_KEY')
+
 # import bleach
 
 
@@ -208,7 +215,52 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Order.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        stripe_payment_id = serializer.validated_data['stripe_payment_id']
+        session = stripe.checkout.Session.retrieve(stripe_payment_id)
+
+        if stripe_payment_id and session.payment_status == 'paid':
+            product_for_order_objects = ProductForOrder.objects.filter(
+                user=self.request.user
+            )
+
+            if not product_for_order_objects.exists():
+                return
+
+            userDetails = UserDetails.objects.get(user=self.request.user)
+            product_ordered_list = []
+
+            order = serializer.save(
+                user=self.request.user,
+                adress=userDetails.adress,
+                stripe_payment_id=stripe_payment_id
+            )
+
+            for product_for_order in product_for_order_objects:
+                product_ordered = ProductOrdered.objects.create(
+                    product=product_for_order.product,
+                    size=product_for_order.size,
+                    quantity=product_for_order.quantity,
+                    related_order=order
+                )
+
+                sizes_and_quantities_available = [pair.split(
+                    '-') for pair in product_for_order.product.available_sizes.split(', ')]
+
+                for i, (quantity, size) in enumerate(sizes_and_quantities_available):
+                    if size == product_for_order.size:
+                        sizes_and_quantities_available[i][0] = str(
+                            int(quantity) - product_for_order.quantity)
+
+                updated_available_sizes = ', '.join(
+                    ['-'.join(pair) for pair in sizes_and_quantities_available])
+
+                product_for_order.product.available_sizes = updated_available_sizes
+                product_for_order.product.save()
+
+                product_ordered_list.append(product_ordered)
+
+            order.products.set(product_ordered_list)
+            product_for_order_objects.delete()
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -216,5 +268,61 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset, many=True, context={'request': request}
         )
 
-        # Retorna apenas a lista de resultados
         return Response(serializer.data, status=HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def verify_available_products(request):
+    user = request.user
+
+    user_products_for_order = ProductForOrder.objects.filter(user=user)
+
+    for product_for_order in user_products_for_order:
+        product = product_for_order.product
+        quantity_needed = product_for_order.quantity
+        size_needed = product_for_order.size
+
+        sizes_and_quantities = [pair.split(
+            '-') for pair in product.available_sizes.split(', ')]
+
+        available_quantity = next(
+            (int(quantity) for quantity, size in sizes_and_quantities if size == size_needed), 0)
+
+        if available_quantity < quantity_needed:
+            product_for_order.delete()
+            return Response(
+                {'message': f'Produto "{product.name}" não tem quantidade suficiente em estoque para o tamanho "{size_needed}".'},
+                status=HTTP_400_BAD_REQUEST)
+
+    return Response(
+        {'message': 'Todos os produtos têm quantidade suficiente em estoque.'},
+        status=HTTP_200_OK)
+
+
+@api_view(['POST'])
+def create_checkout_session(request):
+    try:
+        price = request.data.get('price')
+
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'brl',
+                    'product_data': {
+                        'name': 'Pedido Boutique Rimini',
+                    },
+                    'unit_amount': price,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url='http://localhost:5173/carrinho/?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='http://localhost:5173/carrinho/',
+        )
+
+        return JsonResponse({'redirectUrl': session['url']})
+    except stripe.error.StripeError as e:
+        print(f"Erro do stripe: {e}")
+        return Response({'error': str(e)}, status=400)

@@ -98,7 +98,13 @@ class ProductOrderedSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     products = ProductOrderedSerializer(
         many=True, read_only=True, source='productordered_set')
+    trackingCode = serializers.CharField(
+        source='tracking_code', read_only=True)
 
     class Meta:
         model = Order
-        exclude = ['user']
+        exclude = ['user', 'tracking_code']
+
+    extra_kwargs = {
+        'adress': {'required': False},
+    }

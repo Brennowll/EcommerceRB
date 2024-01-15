@@ -8,7 +8,8 @@ from rest_framework_simplejwt.views import (
 
 from core.views import (CustomTokenObtainPairView, UserDetailsViewSet, UserViewSet,
                         create_user, PictureViewSet, ProductViewSet,
-                        ProductForOrderViewSet, OrderViewSet,)
+                        ProductForOrderViewSet, OrderViewSet, create_checkout_session,
+                        verify_available_products)
 
 app_name = 'core'
 
@@ -27,6 +28,10 @@ urlpatterns = [
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('create_user/', create_user, name='create_user'),
+    path('create_checkout_session/', create_checkout_session,
+         name='create_checkout_session'),
+    path('verify_available_products/', verify_available_products,
+         name='verify_available_products'),
 ]
 
 if settings.DEBUG:

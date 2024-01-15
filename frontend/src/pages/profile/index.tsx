@@ -1,8 +1,12 @@
-import { useState } from "react"
+import { useState, useContext } from "react"
+import { Link } from "react-router-dom"
+
+import { GlobalStateContext } from "../../store/GlobalStateProvider"
 import ProfileView from "./ProfileView"
 import OrdersView from "./OrdersView"
 
 const ProfilePage = () => {
+  const { userIsLogged } = useContext(GlobalStateContext)
   const [profileIsActive, setProfileIsActive] =
     useState<boolean>(true)
 
@@ -57,7 +61,21 @@ const ProfilePage = () => {
           </button>
         </header>
         <div className="flex h-fit w-full flex-col pt-5">
-          {profileIsActive ? <ProfileView /> : <OrdersView />}
+          {userIsLogged ? (
+            profileIsActive ? (
+              <ProfileView />
+            ) : (
+              <OrdersView />
+            )
+          ) : (
+            <Link
+              to={"/login"}
+              className="text-center hover:underline"
+            >
+              Você não está logado! <br />
+              Clique aqui para entrar em sua conta.
+            </Link>
+          )}
         </div>
       </div>
     </section>
