@@ -3,9 +3,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useMutation } from "react-query"
 import { z } from "zod"
-import Cookies from "js-cookie"
+
 import { GlobalStateContext } from "../../../store/GlobalStateProvider"
 import { api } from "../../../store/QueryClient"
+import { userDetailsSchema } from "../../../store/zodSchemas"
 import {
   renderErrorMessage,
   renderSucessMessage,
@@ -17,23 +18,6 @@ const ProfileView = () => {
 
   const [apiError, setApiError] = useState<string | null>(null)
   const [apiSuccess, setApiSuccess] = useState<string | null>(null)
-
-  const userDetailsSchema = z.object({
-    cellphone: z.string().refine((value) => /^\d{11}$/.test(value), {
-      message: "O telefone deve ter exatamente 11 dígitos numéricos.",
-    }),
-    adress: z.string().refine((value) => value.trim() !== "", {
-      message: "O endereço é obrigatório",
-    }),
-    cep: z
-      .string()
-      .refine((value) => value.trim() !== "", {
-        message: "O cep é obrigatório",
-      })
-      .refine((value) => /^\d{5}-\d{3}$/.test(value), {
-        message: "O CEP deve seguir o formato 12345-678.",
-      }),
-  })
 
   type UserDetails = z.infer<typeof userDetailsSchema>
 
@@ -48,7 +32,6 @@ const ProfileView = () => {
   const { mutate, isSuccess } = useMutation({
     mutationFn: async (userDetailsUpdated: UserDetails) => {
       setApiError(null)
-      const accessToken = Cookies.get("access_token")
 
       const response = await api.put(
         `/users_details/${
@@ -60,11 +43,6 @@ const ProfileView = () => {
           cellphone: `+55${userDetailsUpdated.cellphone}`,
           adress: userDetailsUpdated.adress,
           cep: userDetailsUpdated.cep,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
         },
       )
 

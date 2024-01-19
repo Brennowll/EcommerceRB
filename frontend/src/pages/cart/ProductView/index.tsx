@@ -1,5 +1,4 @@
 import { useMutation } from "react-query"
-import Cookies from "js-cookie"
 
 import { api } from "../../../store/QueryClient"
 import trashIcon from "/src/assets/trashIcon.svg"
@@ -22,21 +21,9 @@ const ProductView = (props: ProductViewProps) => {
   const { mutate } = useMutation({
     mutationKey: ["deleteProductForOrder"],
     mutationFn: async () => {
-      const token = Cookies.get("access_token")
-
-      if (!token) {
-        return Promise.reject(new Error("Token not found"))
-      }
-
       const response = await api.delete(
         `products_for_order/${props.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       )
-
       return response.data
     },
     onSuccess: props.refetchProducts,

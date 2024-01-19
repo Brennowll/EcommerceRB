@@ -9,10 +9,10 @@ import Product from "../../components/Product"
 import NavPages from "./NavPages"
 
 type Product = {
-  id: number
   category: string
   picturesLinks: string[]
   name: string
+  slug: string
   description: string
   sizesAvailable: string
   price: number
@@ -41,10 +41,10 @@ const HomePage = () => {
   const renderProducts = () => {
     return products?.map((product) => (
       <Product
-        key={product.id}
-        id={product.id}
+        key={product.slug}
         imgURLs={product.picturesLinks[0]}
         title={product.name}
+        slug={product.slug}
         price={product.price}
       />
     ))

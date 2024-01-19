@@ -47,7 +47,6 @@ const NavPages = () => {
   useEffect(() => {
     calculatePrevNextPages()
     calculatePagesToShow()
-    console.log("render")
   }, [page, numPages, isFirstPage, isLastPage])
 
   const renderArrowLink = (previousOrNext: string) => {

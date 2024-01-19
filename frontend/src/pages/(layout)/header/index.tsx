@@ -1,10 +1,13 @@
 import { useState, useEffect, useContext } from "react"
 import { GlobalStateContext } from "../../../store/GlobalStateProvider"
+import { useQueryClient } from "react-query"
+import { Link } from "react-router-dom"
+
+import { renderContactIcons } from "../../../store/functions"
+import logoIcon from "/src/assets/RiminiLogoW.svg"
 import cartIcon from "/src/assets/cartIcon.svg"
 import menuIcon from "/src/assets/menuIcon.svg"
-import { renderContactIcons } from "../../../store/functions"
 import AuthLinks from "../../../components/AuthLinks"
-import { Link } from "react-router-dom"
 
 const Header = () => {
   const { navMenuIsOpen, setNavMenuIsOpen } = useContext(
@@ -13,6 +16,8 @@ const Header = () => {
   const [windowWidth, setWindowWidth] = useState<number>(
     window.innerWidth,
   )
+
+  const queryClient = useQueryClient()
 
   const handleMenuButtonClick = () => {
     setNavMenuIsOpen(!navMenuIsOpen)
@@ -52,15 +57,21 @@ const Header = () => {
     </div>
   )
 
+  const handleCartClick = () => {
+    queryClient.refetchQueries("verifyAvailableProducts")
+  }
+
   const renderCartIcon = () => (
     <div className="hidden items-center justify-center md:flex">
-      <a href="/carrinho">
-        {renderIcon(
-          cartIcon,
-          "ícone do carrinho de compras",
-          "h-12 transition-all hover:h-14",
-        )}
-      </a>
+      <button onClick={handleCartClick}>
+        <Link to="/carrinho">
+          {renderIcon(
+            cartIcon,
+            "ícone do carrinho de compras",
+            "h-12 transition-all hover:h-14",
+          )}
+        </Link>
+      </button>
     </div>
   )
 
@@ -86,7 +97,7 @@ const Header = () => {
       >
         <Link to="/pecas">
           {renderIcon(
-            "/src/assets/RiminiLogoW.png",
+            logoIcon,
             "Logo da Rimini Boutique",
             "w-60 object-cover sm:h-20 md:ml-2 md:h-28 md:w-80 xl:ml-0",
           )}

@@ -1,7 +1,6 @@
 import { useContext } from "react"
 import { Routes, Route } from "react-router-dom"
 import { useMutation, useQuery } from "react-query"
-import Cookies from "js-cookie"
 
 import { api } from "../../store/QueryClient"
 import { GlobalStateContext } from "../../store/GlobalStateProvider"
@@ -27,80 +26,58 @@ const Layout = () => {
   const userDetailsQuery = useQuery({
     queryKey: ["userDetails"],
     queryFn: async () => {
-      const token = Cookies.get("access_token")
-
-      if (!token) {
-        return Promise.reject(new Error("Token not found"))
-      }
-
-      const response = await api.get("users_details", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
+      const response = await api.get("users_details")
       return response.data
     },
     onSuccess: (data) => {
       setUserDetails(data)
     },
+    onError: () => {
+      setUserIsLogged(false)
+    },
     refetchOnWindowFocus: false,
+    enabled: false,
+  })
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post("logout/")
+      return response.data
+    },
   })
 
   const refreshTokenMutation = useMutation({
-    mutationFn: async (refreshToken: string) => {
-      const response = await api.post("/token/refresh/", {
-        refresh: refreshToken,
-      })
-
+    mutationFn: async () => {
+      const response = await api.post("/token/refresh/")
       return response.data
     },
-    onSuccess: (data) => {
-      Cookies.remove("access_token")
-      Cookies.set("access_token", data.access)
+    onSuccess: () => {
       tokenValidationQuery.refetch()
     },
     onError: () => {
-      Cookies.remove("access_token")
-      Cookies.remove("refresh_token")
+      logoutMutation.mutate()
     },
   })
 
   const tokenValidationQuery = useQuery({
     queryKey: ["tokenValidation"],
     queryFn: async () => {
-      const token = Cookies.get("access_token")
-
-      if (!token) {
-        return Promise.reject(new Error("Token not found"))
-      }
-
-      const response = await api.get("/users/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
+      const response = await api.get("/users/")
       return response.data
     },
     onSuccess: (data) => {
       setUserData(data)
       setUserIsLogged(true)
+      userDetailsQuery.refetch()
     },
     onError: () => {
-      const refreshToken = Cookies.get("refresh_token")
-      if (refreshToken) {
-        refreshTokenMutation.mutate(refreshToken)
-        return
-      }
-
-      setUserIsLogged(false)
+      refreshTokenMutation.mutate()
     },
     refetchOnWindowFocus: false,
+    retry: 1,
   })
 
-  return userDetailsQuery.isFetching ||
-    tokenValidationQuery.isFetching ? (
+  return tokenValidationQuery.isFetching ? (
     <div className="flex h-screen items-center justify-center">
       <LoadingSpinner />
     </div>

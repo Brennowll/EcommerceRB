@@ -2,7 +2,6 @@ import { useState, useContext, useEffect } from "react"
 import { useQuery, useMutation } from "react-query"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import axios from "axios"
-import Cookies from "js-cookie"
 
 import { api } from "../../store/QueryClient"
 import { GlobalStateContext } from "../../store/GlobalStateProvider"
@@ -64,18 +63,11 @@ const CartPage = () => {
   const { data, refetch, isFetching } = useQuery<ProductsForOrder[]>({
     queryKey: ["userProductsForOrder"],
     queryFn: async () => {
-      const token = Cookies.get("access_token")
-
-      if (!token) {
-        return Promise.reject(new Error("Token not found"))
+      if (!userIsLogged) {
+        return Promise.reject(new Error("User is not logged in."))
       }
 
-      const response = await api.get("products_for_order", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
+      const response = await api.get("products_for_order")
       return response.data
     },
     onSuccess: (data) => {
@@ -99,21 +91,18 @@ const CartPage = () => {
     useQuery<ShippingArgs>({
       queryKey: ["shippingCost"],
       queryFn: async () => {
+        if (!userIsLogged) {
+          return Promise.reject(new Error("User is not logged in."))
+        }
+
         if (userDetails?.cep == "") {
           return Promise.reject(new Error("Cep not found"))
         }
 
         const cepOnlyNum = userDetails?.cep.replace(/\D/g, "")
-        const companyCep = 70762510
-        const weight = 3
-        const height = 30
-        const width = 30
-        const length = 30
-        const key = "1f845e6f37b159fd89b2a8f54d2651bf04f83627"
-
-        const url = `https://www.cepcerto.com/ws/json-frete/${companyCep}/${cepOnlyNum}/${weight}/${height}/${width}/${length}/${key}`
-
-        const response = await axios.get(url)
+        const response = await api.post("calculate_shipping/", {
+          cep: cepOnlyNum,
+        })
         return response.data
       },
       onSuccess: (data) => {
@@ -121,28 +110,13 @@ const CartPage = () => {
         tempOrderSummary.shippingCost = data.valorsedex
         setOrderSummary(tempOrderSummary)
       },
-      enabled: false,
+      refetchOnWindowFocus: false,
     })
 
   const { mutate: mutateVerifyAvailableProducts } = useMutation({
     mutationKey: ["verifyAvailableProducts"],
     mutationFn: async () => {
-      const token = Cookies.get("access_token")
-
-      if (!token) {
-        return Promise.reject(new Error("Token not found"))
-      }
-
-      const response = await api.post(
-        "verify_available_products/",
-        null,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-
+      const response = await api.post("verify_available_products/")
       return response.data
     },
     onSuccess: () => {
@@ -182,25 +156,10 @@ const CartPage = () => {
   const { mutate: createOrderMutation } = useMutation({
     mutationKey: ["createOrder"],
     mutationFn: async () => {
-      const token = Cookies.get("access_token")
-
-      if (!token) {
-        return Promise.reject(new Error("Token not found"))
-      }
-
-      const response = await api.post(
-        "orders/",
-        {
-          stripe_payment_id: session_id,
-          adress: userDetails?.adress,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-
+      const response = await api.post("orders/", {
+        stripe_payment_id: session_id,
+        adress: userDetails?.adress,
+      })
       return response.data
     },
     onSuccess: () => {
@@ -255,44 +214,50 @@ const CartPage = () => {
       noAdressRegistered ||
       noCellphoneRegistered
     ) {
-      setApiError(
+      return setApiError(
         "Cadastre CEP, endereço e telefone para fazer um pedido",
       )
-    } else {
-      setApiError(null)
-      mutateVerifyAvailableProducts()
     }
+
+    if (isFetching || shippingIsFetching) {
+      return setApiError(
+        "O frete está sendo calculado, aguarde alguns segundos.",
+      )
+    }
+
+    setApiError(null)
+    mutateVerifyAvailableProducts()
   }
 
-  const adressDescription = `
-    Endereço: ${
+  const adressDescription = [
+    `Endereço: ${
       userDetails
         ? userDetails?.adress !== ""
           ? userDetails.adress
           : "Não cadastrado!"
         : "Não cadastrado!"
-    } <br />
-    CEP: ${
+    }`,
+    `CEP: ${
       userDetails
         ? userDetails?.cep !== ""
           ? userDetails.cep
           : "Não cadastrado!"
         : "Não cadastrado!"
-    }
-  `
+    }`,
+  ]
 
-  const orderSumarryDescription = `
-    Produtos: R$${parseInt(orderSumarry.productsTotalCost).toFixed(
+  const orderSumarryDescription = [
+    `Produtos: R$${parseInt(orderSumarry.productsTotalCost).toFixed(
       2,
-    )} <br />
-    Frete: R$${orderSumarry.shippingCost} <br />
-    Total: R$${totalCost.toFixed(2)}
-  `
+    )}`,
+    `Frete: R$${orderSumarry.shippingCost}`,
+    `Total: R$${totalCost.toFixed(2)}`,
+  ]
 
   return (
     <main className="flex h-fit w-full items-center justify-center sm:h-full">
       {userIsLogged ? (
-        isFetching || shippingIsFetching ? (
+        isFetching ? (
           <LoadingSpinner />
         ) : (
           <div
@@ -300,9 +265,10 @@ const CartPage = () => {
           py-16 sm:h-full md:max-h-[28rem] md:flex-row md:py-0"
           >
             <div
-              className="ml-2 grid h-fit w-[calc(100%-20px)] max-w-xl flex-col gap-2 self-center
-            overflow-y-auto rounded-md bg-primary bg-opacity-70 p-3 sm:w-full
-            sm:pr-3 md:mx-3 md:max-h-full md:min-h-full md:self-start"
+              className="ml-2 grid h-fit w-[calc(100%-20px)] max-w-xl
+              auto-rows-min flex-col gap-2 self-center overflow-y-auto rounded-md
+              bg-primary bg-opacity-70 p-3 sm:w-full sm:pr-3 md:mx-3
+              md:max-h-full md:min-h-full md:self-start"
             >
               {data && data.length > 0 ? (
                 renderProductsView()
@@ -323,13 +289,13 @@ const CartPage = () => {
             >
               <OrderDescriptionBox
                 title="Informações para envio:"
-                description={adressDescription}
+                descriptions={adressDescription}
                 buttonFn={handleChangeShippingInfoClick}
                 buttonName="Editar"
               />
               <OrderDescriptionBox
                 title="Resumo do pedido:"
-                description={orderSumarryDescription}
+                descriptions={orderSumarryDescription}
                 buttonFn={handleMakeOrderClick}
                 buttonName="Fazer pedido"
               />

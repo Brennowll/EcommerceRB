@@ -2,6 +2,8 @@ import { useContext } from "react"
 import { Link } from "react-router-dom"
 import Cookies from "js-cookie"
 import { GlobalStateContext } from "../../store/GlobalStateProvider"
+import { useMutation } from "react-query"
+import { api } from "../../store/QueryClient"
 
 type AuthLinksProps = {
   containerClass: string
@@ -10,9 +12,18 @@ type AuthLinksProps = {
 const AuthLinks = (props: AuthLinksProps) => {
   const { userIsLogged } = useContext(GlobalStateContext)
 
-  const logout = () => {
-    Cookies.remove("access_token")
-    Cookies.remove("refresh_token")
+  const { mutate } = useMutation({
+    mutationFn: async () => {
+      const response = await api.post("logout/")
+      return response.data
+    },
+    onSuccess: () => {
+      window.location.href = "pecas"
+    },
+  })
+
+  const handleLogoutClick = () => {
+    mutate()
   }
 
   const renderLoginLinks = () => {
@@ -45,15 +56,13 @@ const AuthLinks = (props: AuthLinksProps) => {
           Perfil <br />
           Pedidos
         </Link>
-        <a href="pecas">
-          <button
-            className="text-center font-bauhausRegular
+        <button
+          className="text-center font-bauhausRegular
           hover:underline"
-            onClick={logout}
-          >
-            Sair
-          </button>
-        </a>
+          onClick={handleLogoutClick}
+        >
+          Sair
+        </button>
       </>
     )
   }

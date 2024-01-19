@@ -16,6 +16,7 @@ type Product = {
   category: string
   picturesLinks: string[]
   name: string
+  slug: string
   description: string
   availableSizes: string
   price: number

@@ -1,14 +1,15 @@
 import { useQuery } from "react-query"
 import { useNavigate } from "react-router-dom"
-import axios from "axios"
-import Product from "../../../../components/Product"
 import { LoadingSpinner } from "../../../../components/LoadingSpinner"
+import { api } from "../../../../store/QueryClient"
+import Product from "../../../../components/Product"
 
 type Product = {
   id: number
   picturesLinks: string[]
   price: number
   name: string
+  slug: string
 }
 
 type ProductOrdered = {
@@ -42,10 +43,10 @@ const Order = (props: OrderProps) => {
         return Promise.reject(new Error("Tracking code not found"))
       }
 
-      const key = "1f845e6f37b159fd89b2a8f54d2651bf04f83627"
-      const url = `https://www.cepcerto.com/ws/encomenda-json/${props.trackingCode}/${key}/`
+      const response = await api.post("track_order/", {
+        trackingCode: props.trackingCode,
+      })
 
-      const response = await axios.get(url)
       return response.data
     },
     refetchOnWindowFocus: false,
@@ -89,7 +90,7 @@ const Order = (props: OrderProps) => {
         {props.productsList?.map((productOrdered, index) => (
           <Product
             key={index}
-            id={productOrdered.product.id}
+            slug={productOrdered.product.slug}
             imgURLs={productOrdered.product.picturesLinks[0]}
             title={productOrdered.product.name}
             price={productOrdered.product.price}

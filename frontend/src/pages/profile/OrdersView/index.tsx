@@ -1,5 +1,4 @@
 import { useQuery } from "react-query"
-import Cookies from "js-cookie"
 
 import { api } from "../../../store/QueryClient"
 import { LoadingSpinner } from "../../../components/LoadingSpinner"
@@ -29,14 +28,7 @@ const OrdersView = () => {
   const { data, isFetching } = useQuery<Order[]>({
     queryKey: ["orders"],
     queryFn: async () => {
-      const token = Cookies.get("access_token")
-
-      const response = await api.get("/orders/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
+      const response = await api.get("/orders/")
       return response.data
     },
     refetchOnWindowFocus: false,

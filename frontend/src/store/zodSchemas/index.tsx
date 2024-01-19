@@ -95,3 +95,20 @@ export const signInUserSchema = z
       })
     }
   })
+
+export const userDetailsSchema = z.object({
+  cellphone: z.string().refine((value) => /^\d{11}$/.test(value), {
+    message: "O telefone deve ter exatamente 11 dígitos numéricos.",
+  }),
+  adress: z.string().refine((value) => value.trim() !== "", {
+    message: "O endereço é obrigatório",
+  }),
+  cep: z
+    .string()
+    .refine((value) => value.trim() !== "", {
+      message: "O cep é obrigatório",
+    })
+    .refine((value) => /^\d{5}-\d{3}$/.test(value), {
+      message: "O CEP deve seguir o formato 12345-678.",
+    }),
+})

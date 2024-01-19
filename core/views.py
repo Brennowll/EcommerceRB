@@ -1,6 +1,9 @@
+from rest_framework import status
+import requests
+import stripe
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -9,7 +12,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from decouple import config
-import stripe
 from core.serializers import (UserDetailsSerializer, TokenPairSerializer, CategorySerializer,
                               UserSerializer, PictureSerializer, ProductSerializer,
                               ProductForOrderSerializer, OrderSerializer)
@@ -18,12 +20,43 @@ from core.models import (UserDetails, ProductCategory, ProductForOrder,
 
 
 stripe.api_key = config('STRIPE_SECRET_KEY')
-
-# import bleach
+cep_certo_key = config('CEP_CERTO_SECRET_KEY')
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+
+        # Adicionando o token ao cookie HTTP-only
+        response.set_cookie(
+            'access_token', response.data['access'], httponly=True)
+        response.set_cookie(
+            'refresh_token', response.data['refresh'], httponly=True)
+
+        return response
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+
+        # Adicionando o novo token de acesso ao cookie HTTP-only
+        response.set_cookie(
+            'access_token', response.data['access'], httponly=True)
+
+        return response
+
+
+@api_view(['POST'])
+def CustomLogoutView(request):
+    response = JsonResponse({'message': 'Logout successful'})
+
+    response.delete_cookie('access_token')
+    response.delete_cookie('refresh_token')
+
+    return response
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -102,36 +135,45 @@ class PictureViewSet(viewsets.ModelViewSet):
         return Picture.objects.all()
 
 
+class SingleProductViewSet(viewsets.ModelViewSet):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        slug = self.request.query_params.get('slug', None)
+        queryset = Product.objects.all()
+        queryset = queryset.get(slug=slug)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=False)
+        return Response(serializer.data)
+
+
 class CustomPagination(PageNumberPagination):
     page_size = 28
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        id = self.request.query_params.get('id', None)
+        authorization_header = self.request.headers.get('Authorization')
+        print(authorization_header)
+
         category = self.request.query_params.get('category', None)
         queryset = Product.objects.all()
 
         if category and ProductCategory.objects.filter(name=category).exists():
             queryset = queryset.filter(category__name=category)
 
-        if id:
-            queryset = queryset.filter(id=id)
-
         queryset = queryset.order_by('id')
         return queryset
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        id = self.request.query_params.get('id', None)
-
-        if id:
-            queryset = self.get_queryset()
-            serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
 
         page = self.paginate_queryset(queryset)
         categories = ProductCategory.objects.all()
@@ -326,3 +368,47 @@ def create_checkout_session(request):
     except stripe.error.StripeError as e:
         print(f"Erro do stripe: {e}")
         return Response({'error': str(e)}, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def calculate_shipping(request):
+    cep = request.data.get('cep')
+
+    company_cep = 70762510
+    weight = 3
+    height = 30
+    width = 30
+    length = 30
+
+    url = (
+        'https://www.cepcerto.com/ws/json-frete'
+        f'/{company_cep}/{cep}/{weight}/{height}/{width}/{length}/{cep_certo_key}'
+    )
+
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        return Response({'error': 'Unable to fetch data'}, status=HTTP_400_BAD_REQUEST)
+
+    data = response.json()
+    return Response(data, status=HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def track_order(request):
+    tracking_code = request.data.get('trackingCode')
+
+    url = (
+        'https://www.cepcerto.com/ws/encomenda-json'
+        f'/{tracking_code}/{cep_certo_key}/'
+    )
+
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        return Response({'error': 'Unable to fetch data'}, status=HTTP_400_BAD_REQUEST)
+
+    data = response.json()
+    return Response(data, status=HTTP_200_OK)

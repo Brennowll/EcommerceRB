@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom"
 
 type ProductProps = {
-  id: number
   imgURLs: string
   title: string
-  sizesAndColors?: string
+  slug: string
   price?: number
   size?: string
   isForOrderPage?: boolean
@@ -13,7 +12,7 @@ type ProductProps = {
 const Product = (props: ProductProps) => {
   return (
     <Link
-      to={`/produtos/${props.id}`}
+      to={`/produtos/${props.slug}`}
       className="flex h-72 w-32 flex-col
       justify-center py-3 sm:h-fit sm:w-56"
     >

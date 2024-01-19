@@ -38,7 +38,6 @@ const SignIn = () => {
         email: data.email,
         password: data.password,
       })
-
       return response.data
     },
     onSuccess: () => {

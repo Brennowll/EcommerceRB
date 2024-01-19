@@ -1,6 +1,6 @@
 type BoxProps = {
   title: string
-  description: string
+  descriptions: string[]
   buttonFn: () => void
   buttonName: string
 }
@@ -12,10 +12,13 @@ const OrderDescriptionBox = (props: BoxProps) => {
       bg-primary bg-opacity-70 px-6 py-3 shadow-md"
     >
       <h3 className="text-xl">{props.title}</h3>
-      <p
-        className="text-sm text-textDim"
-        dangerouslySetInnerHTML={{ __html: props.description }}
-      ></p>
+      <p className="text-sm text-textDim">
+        {props.descriptions.map((line, index) => (
+          <span key={index}>
+            {line} <br />
+          </span>
+        ))}
+      </p>
       <button
         className="mt-4 rounded-md bg-primaryShade bg-opacity-60 py-1
         font-bold transition-all hover:bg-opacity-80"

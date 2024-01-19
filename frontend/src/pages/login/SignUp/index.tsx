@@ -1,10 +1,9 @@
 import { useState, useContext } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation } from "react-query"
+import { useMutation, useQueryClient } from "react-query"
 import { useNavigate } from "react-router-dom"
 import { z } from "zod"
-import Cookies from "js-cookie"
 import axios from "axios"
 
 import { api } from "../../../store/QueryClient"
@@ -21,6 +20,7 @@ const SignUp = () => {
   const { setUserIsLogged } = useContext(GlobalStateContext)
   const [loginApiError, setLoginApiError] = useState<string | null>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -41,14 +41,9 @@ const SignUp = () => {
 
       return response.data
     },
-    onSuccess: (data) => {
-      const token = data.access
-      const refreshToken = data.refresh
-
-      Cookies.set("access_token", token)
-      Cookies.set("refresh_token", refreshToken)
-
+    onSuccess: () => {
       setUserIsLogged(true)
+      queryClient.refetchQueries("tokenValidation")
       navigate("/pecas")
     },
     onError: (error) => {

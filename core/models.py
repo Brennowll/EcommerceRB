@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -48,10 +49,17 @@ class Product(models.Model):
         ProductCategory, on_delete=models.PROTECT, to_field='name')
     pictures = models.ManyToManyField(Picture)
     name = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True, blank=True, null=True)
     description = models.TextField(max_length=250)
     available_sizes = models.CharField(max_length=100)
     price = models.FloatField()
     is_available = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.name)

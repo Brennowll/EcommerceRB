@@ -1,7 +1,6 @@
 import { useEffect, useState, useContext } from "react"
 import { useQuery, useMutation } from "react-query"
 import { useLocation, useNavigate } from "react-router-dom"
-import Cookies from "js-cookie"
 
 import { api } from "../../store/QueryClient"
 import { GlobalStateContext } from "../../store/GlobalStateProvider"
@@ -13,6 +12,7 @@ type Product = {
   id: number
   picturesLinks: string[]
   name: string
+  slug: string
   description: string
   availableSizes: string
   price: number
@@ -32,13 +32,13 @@ const ProductPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const pathParts = location.pathname.split("/")
-  const productIdPath = pathParts[pathParts.length - 1]
+  const productSlug = pathParts[pathParts.length - 1]
 
-  const { data, isFetching } = useQuery<Product[]>({
-    queryKey: ["product"],
+  const { data, isFetching } = useQuery<Product>({
+    queryKey: ["single_product"],
     queryFn: async () => {
-      const response = await api.get("products", {
-        params: { id: productIdPath },
+      const response = await api.get("single_product", {
+        params: { slug: productSlug },
       })
 
       return response.data
@@ -49,26 +49,11 @@ const ProductPage = () => {
   const { mutate } = useMutation({
     mutationKey: ["addToCartMutation"],
     mutationFn: async () => {
-      const token = Cookies.get("access_token")
-
-      if (!token) {
-        return Promise.reject(new Error("Token not found"))
-      }
-
-      const response = await api.post(
-        "products_for_order/",
-        {
-          product: productIdPath,
-          size: sizeSelected,
-          quantity: 1,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-
+      const response = await api.post("products_for_order/", {
+        product: data?.id,
+        size: sizeSelected,
+        quantity: 1,
+      })
       return response.data
     },
     onSuccess: () => {
@@ -111,7 +96,7 @@ const ProductPage = () => {
       return
     }
 
-    const availableSizes = data[0].availableSizes.split(",")
+    const availableSizes = data.availableSizes.split(",")
     const sizesTemp: string[] = []
 
     for (const sizes of availableSizes) {
@@ -124,7 +109,7 @@ const ProductPage = () => {
 
   const renderPictureButtons = () => {
     return data
-      ? data[0].picturesLinks.map((link, index) => (
+      ? data.picturesLinks.map((link, index) => (
           <button
             key={index}
             className="relative mx-1 h-12 w-9 rounded-md shadow-md md:h-16 md:w-12"
@@ -196,8 +181,7 @@ const ProductPage = () => {
               <button
                 onClick={() =>
                   data &&
-                  pictureNumSelected ===
-                    data[0].picturesLinks.length - 1
+                  pictureNumSelected === data.picturesLinks.length - 1
                     ? null
                     : setPictureNumSelected(pictureNumSelected + 1)
                 }
@@ -212,9 +196,7 @@ const ProductPage = () => {
             <figure>
               <img
                 src={
-                  data
-                    ? data[0].picturesLinks[pictureNumSelected]
-                    : ""
+                  data ? data.picturesLinks[pictureNumSelected] : ""
                 }
                 alt="Foto selecionada do produto"
                 className="max-h-80 max-w-sm rounded-md md:max-h-[32rem]"
@@ -223,14 +205,14 @@ const ProductPage = () => {
           </div>
           <div className="flex w-80 flex-col gap-3 px-3 sm:w-52 sm:px-0 md:w-64 lg:w-80">
             <h2 className="text-2xl leading-5 md:text-[1.6rem]">
-              {data ? "R$" + data[0].price : null}
+              {data ? "R$" + data.price : null}
             </h2>
             <div>
               <h3 className="text-lg md:text-xl">
-                {data ? data[0].name : null}
+                {data ? data.name : null}
               </h3>
               <p className="text-sm text-neutral-600 md:text-base">
-                {data ? data[0].description : null}
+                {data ? data.description : null}
               </p>
             </div>
             <div className="flex flex-col">
